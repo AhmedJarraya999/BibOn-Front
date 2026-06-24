@@ -14,6 +14,7 @@ const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   distance: z.coerce.number().positive('Distance must be positive') as z.ZodNumber,
   startTime: z.string().min(1, 'Start time is required'),
+  fee: z.coerce.number().min(0, 'Fee must be 0 or more') as z.ZodNumber,
   eventId: z.string().min(1, 'Event is required'),
 });
 
@@ -41,9 +42,11 @@ export function RaceForm({ race, defaultEventId, onSuccess }: Props) {
       name: race.name,
       distance: race.distance,
       startTime: race.startTime.slice(0, 16),
+      fee: Number(race.fee ?? 0),
       eventId: race.eventId,
     } : {
       eventId: defaultEventId ?? '',
+      fee: 0,
     },
   });
 
@@ -74,6 +77,12 @@ export function RaceForm({ race, defaultEventId, onSuccess }: Props) {
         <Label>Distance (km)</Label>
         <Input type="number" step="0.1" placeholder="10" {...register('distance')} />
         {errors.distance && <p className="mt-1 text-xs text-red-500">{errors.distance.message}</p>}
+      </div>
+
+      <div>
+        <Label>Participation Fee (TND)</Label>
+        <Input type="number" step="0.001" min="0" placeholder="0.000" {...register('fee')} />
+        {errors.fee && <p className="mt-1 text-xs text-red-500">{errors.fee.message}</p>}
       </div>
 
       <div>

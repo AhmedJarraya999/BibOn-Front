@@ -4,9 +4,9 @@ const PUBLIC_PATHS = ['/login', '/register'];
 
 const ROLE_PATHS: Record<string, string[]> = {
   PARTICIPANT: ['/portal'],
-  VOLUNTEER: ['/checkin', '/finish'],
+  VOLUNTEER: ['/checkin', '/finish', '/distribution'],
   ORGANIZER: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance'],
-  ADMIN: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/checkin', '/finish', '/portal'],
+  ADMIN: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/checkin', '/finish', '/distribution', '/portal'],
 };
 
 export function middleware(req: NextRequest) {

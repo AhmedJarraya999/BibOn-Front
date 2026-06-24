@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer } from 'lucide-react';
+import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
@@ -19,6 +19,7 @@ const organizerLinks = [
 const volunteerLinks = [
   { href: '/checkin', label: 'Check-in', icon: QrCode },
   { href: '/finish', label: 'Finish Line', icon: Timer },
+  { href: '/distribution', label: 'Distribution', icon: Package },
 ];
 
 function NavContent({ onClose }: { onClose?: () => void }) {

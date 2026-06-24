@@ -12,7 +12,7 @@ export interface Event {
   name: string;
   location: string;
   date: string;
-  startDate?: string;
+  paymentMode: 'PREPAID_ONLY' | 'PREPAID_OR_ONSITE';
   organizationId: string;
 }
 
@@ -21,8 +21,10 @@ export interface Race {
   name: string;
   distance: number;
   startTime: string;
+  fee?: number | string;
   eventId: string;
 }
+
 
 export interface Participant {
   id: string;
