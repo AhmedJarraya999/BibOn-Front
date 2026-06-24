@@ -38,6 +38,8 @@ export interface Registration {
   status: string;
   raceId: string;
   participantId: string;
+  startTime?: string;
+  finishTime?: string;
   participant?: Participant;
   race?: Race;
 }
