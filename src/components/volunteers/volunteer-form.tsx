@@ -30,7 +30,7 @@ export function VolunteerForm({ volunteer, onSuccess }: Props) {
 
   const { data: usersData } = useQuery({
     queryKey: ['users-all'],
-    queryFn: () => api.get('/users', { params: { limit: 200 } }).then((r) => r.data),
+    queryFn: () => api.get('/users', { params: { role: 'VOLUNTEER' } }).then((r) => r.data),
   });
 
   const { data: eventsData } = useQuery({
