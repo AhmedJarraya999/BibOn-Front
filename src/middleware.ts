@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 const PUBLIC_PATHS = ['/login', '/register'];
 
 const ROLE_PATHS: Record<string, string[]> = {
+  PARTICIPANT: ['/portal'],
   VOLUNTEER: ['/checkin'],
   ORGANIZER: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance'],
-  ADMIN: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/checkin'],
+  ADMIN: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/checkin', '/portal'],
 };
 
 export function middleware(req: NextRequest) {
@@ -26,7 +27,7 @@ export function middleware(req: NextRequest) {
     const allowed = ROLE_PATHS[role] ?? ROLE_PATHS['ORGANIZER'];
     const isAllowed = allowed.some((p) => pathname.startsWith(p));
     if (!isAllowed) {
-      const defaultPath = role === 'VOLUNTEER' ? '/checkin' : '/events';
+      const defaultPath = role === 'VOLUNTEER' ? '/checkin' : role === 'PARTICIPANT' ? '/portal/my-registrations' : '/events';
       return NextResponse.redirect(new URL(defaultPath, req.url));
     }
   }

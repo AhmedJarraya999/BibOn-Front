@@ -30,7 +30,9 @@ export default function LoginPage() {
       const res = await api.post('/auth/login', data);
       saveSession(res.data.access_token, res.data.refresh_token, res.data.user);
       const role = res.data.user.role;
-      router.push(role === 'VOLUNTEER' ? '/checkin' : '/events');
+      if (role === 'VOLUNTEER') router.push('/checkin');
+      else if (role === 'PARTICIPANT') router.push('/portal/my-registrations');
+      else router.push('/events');
     } catch {
       setError('Invalid email or password');
     }

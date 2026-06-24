@@ -1,30 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X } from 'lucide-react';
+import { ClipboardList, LogOut, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
 
-const organizerLinks = [
-  { href: '/organizations', label: 'Organizations', icon: Building2 },
-  { href: '/events', label: 'Events', icon: Calendar },
-  { href: '/races', label: 'Races', icon: Flag },
-  { href: '/participants', label: 'Participants', icon: Users },
-  { href: '/registrations', label: 'Registrations', icon: ClipboardList },
-  { href: '/volunteers', label: 'Volunteers', icon: UserCheck },
-  { href: '/attendance', label: 'Attendance', icon: BarChart2 },
-];
-
-const volunteerLinks = [
-  { href: '/checkin', label: 'Check-in', icon: QrCode },
+const links = [
+  { href: '/portal/my-registrations', label: 'My Registrations', icon: ClipboardList },
 ];
 
 function NavContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const user = getUser();
-  const isVolunteer = user?.role === 'VOLUNTEER';
-  const links = isVolunteer ? volunteerLinks : organizerLinks;
 
   return (
     <>
@@ -35,6 +23,18 @@ function NavContent({ onClose }: { onClose?: () => void }) {
             <X className="h-5 w-5" />
           </button>
         )}
+      </div>
+
+      <div className="border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
+            <User className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+            <p className="text-xs text-gray-400">Participant</p>
+          </div>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1 p-4">
@@ -57,10 +57,6 @@ function NavContent({ onClose }: { onClose?: () => void }) {
       </nav>
 
       <div className="border-t border-gray-200 p-4">
-        <div className="mb-3 px-3">
-          <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-          <p className="text-xs text-gray-500">{user?.role}</p>
-        </div>
         <button
           onClick={logout}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -73,7 +69,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   );
 }
 
-export function Sidebar() {
+export function PortalSidebar() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -89,7 +85,6 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/30 lg:hidden"
@@ -97,7 +92,6 @@ export function Sidebar() {
         />
       )}
 
-      {/* Mobile drawer */}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-white shadow-xl transition-transform duration-300 lg:hidden',
@@ -107,7 +101,6 @@ export function Sidebar() {
         <NavContent onClose={() => setOpen(false)} />
       </aside>
 
-      {/* Desktop sidebar */}
       <aside className="hidden lg:flex h-screen w-60 shrink-0 flex-col border-r border-gray-200 bg-white">
         <NavContent />
       </aside>
