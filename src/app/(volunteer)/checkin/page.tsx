@@ -1,14 +1,17 @@
 'use client';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Search, CheckCircle, XCircle, QrCode, Hash } from 'lucide-react';
 import api from '@/lib/api';
-import { type Registration } from '@/types';
+import { type Registration, type Race } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { QrScanner } from '@/components/checkin/qr-scanner';
 import { useToast } from '@/components/ui/toast';
+import { formatDateTime } from '@/lib/utils';
 
 type Mode = 'qr' | 'bib';
 
@@ -16,6 +19,12 @@ export default function CheckInPage() {
   const [mode, setMode] = useState<Mode>('qr');
   const [raceId, setRaceId] = useState('');
   const [bibNumber, setBibNumber] = useState('');
+
+  const { data: racesData } = useQuery({
+    queryKey: ['races-checkin'],
+    queryFn: () => api.get('/races', { params: { limit: 100 } }).then((r) => r.data),
+  });
+  const races: Race[] = racesData?.data ?? [];
   const [result, setResult] = useState<Registration | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -120,12 +129,19 @@ export default function CheckInPage() {
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Race ID</label>
-              <Input
-                placeholder="Enter race ID"
+              <Label>Race</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={raceId}
-                onChange={(e) => setRaceId(e.target.value)}
-              />
+                onChange={(e) => { setRaceId(e.target.value); reset(); }}
+              >
+                <option value="">Select a race…</option>
+                {races.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} — {r.distance} km · {formatDateTime(r.startTime)}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Bib Number</label>
