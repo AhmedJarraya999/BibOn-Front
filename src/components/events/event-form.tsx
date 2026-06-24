@@ -13,12 +13,8 @@ import { useToast } from '@/components/ui/toast';
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   location: z.string().min(2, 'Location is required'),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().min(1, 'End date is required'),
+  date: z.string().min(1, 'Date is required'),
   organizationId: z.string().min(1, 'Organization is required'),
-}).refine((d) => d.endDate >= d.startDate, {
-  message: 'End date must be after start date',
-  path: ['endDate'],
 });
 
 type FormData = z.infer<typeof schema>;
@@ -43,8 +39,7 @@ export function EventForm({ event, onSuccess }: Props) {
     defaultValues: event ? {
       name: event.name,
       location: event.location,
-      startDate: event.startDate.slice(0, 10),
-      endDate: event.endDate.slice(0, 10),
+      date: event.startDate?.slice(0, 10),
       organizationId: event.organizationId,
     } : undefined,
   });
@@ -78,17 +73,10 @@ export function EventForm({ event, onSuccess }: Props) {
         {errors.location && <p className="mt-1 text-xs text-red-500">{errors.location.message}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Start Date</Label>
-          <Input type="date" {...register('startDate')} />
-          {errors.startDate && <p className="mt-1 text-xs text-red-500">{errors.startDate.message}</p>}
-        </div>
-        <div>
-          <Label>End Date</Label>
-          <Input type="date" {...register('endDate')} />
-          {errors.endDate && <p className="mt-1 text-xs text-red-500">{errors.endDate.message}</p>}
-        </div>
+      <div>
+        <Label>Date</Label>
+        <Input type="date" {...register('date')} />
+        {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>}
       </div>
 
       <div>

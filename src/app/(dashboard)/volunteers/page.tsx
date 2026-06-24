@@ -1,19 +1,21 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, UserPlus } from 'lucide-react';
 import api from '@/lib/api';
 import { type Volunteer } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { VolunteerForm } from '@/components/volunteers/volunteer-form';
+import { CreateVolunteerAccountForm } from '@/components/volunteers/create-volunteer-account-form';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 export default function VolunteersPage() {
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createAccountOpen, setCreateAccountOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Volunteer | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -41,9 +43,14 @@ export default function VolunteersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Volunteers</h1>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Volunteer
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCreateAccountOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" /> Create Account
+          </Button>
+          <Button onClick={() => setAssignOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Assign to Event
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -97,8 +104,12 @@ export default function VolunteersPage() {
         </div>
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Add Volunteer">
-        <VolunteerForm onSuccess={() => setCreateOpen(false)} />
+      <Modal open={createAccountOpen} onClose={() => setCreateAccountOpen(false)} title="Create Volunteer Account">
+        <CreateVolunteerAccountForm onSuccess={() => setCreateAccountOpen(false)} />
+      </Modal>
+
+      <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Assign Volunteer to Event">
+        <VolunteerForm onSuccess={() => setAssignOpen(false)} />
       </Modal>
 
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Permissions">
