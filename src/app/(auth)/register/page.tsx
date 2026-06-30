@@ -7,14 +7,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { saveSession } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const schema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(2, 'Minimum 2 caractères'),
+  email: z.string().email('Email invalide'),
+  password: z.string().min(8, 'Minimum 8 caractères'),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -30,46 +27,72 @@ export default function RegisterPage() {
     try {
       const res = await api.post('/auth/register', data);
       saveSession(res.data.access_token, res.data.refresh_token, res.data.user);
-      router.push('/events');
+      router.push('/dashboard');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg ?? 'Registration failed');
+      setError(msg ?? 'Erreur lors de la création du compte');
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="mb-2 text-center text-2xl font-bold text-blue-600">RacePlatform</div>
-        <CardTitle className="text-center text-xl">Create an account</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Full Name</label>
-            <Input placeholder="Ahmed Ben Salem" {...register('name')} />
-            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+    <div>
+      <h1 className="text-2xl font-black text-gray-900 mb-1">Créer un compte</h1>
+      <p className="text-sm text-gray-500 mb-8">Rejoignez BibOn — السباق بدا 🏁</p>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Nom complet</label>
+          <input
+            placeholder="Ahmed Ben Salem"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            {...register('name')}
+          />
+          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            placeholder="vous@exemple.com"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            {...register('email')}
+          />
+          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Mot de passe</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            {...register('password')}
+          />
+          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+        </div>
+
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+            {error}
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <Input type="email" placeholder="you@example.com" {...register('email')} />
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-            <Input type="password" placeholder="••••••••" {...register('password')} />
-            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
-          </div>
-          {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating account…' : 'Register'}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">Sign in</Link>
-        </p>
-      </CardContent>
-    </Card>
+        )}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded-xl bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
+        >
+          {isSubmitting ? 'Création…' : 'Créer mon compte'}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-gray-500">
+        Déjà un compte ?{' '}
+        <Link href="/login" className="font-medium text-red-600 hover:underline">
+          Se connecter
+        </Link>
+      </p>
+    </div>
   );
 }

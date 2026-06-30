@@ -95,16 +95,28 @@ export function EventForm({ event, onSuccess }: Props) {
 
       <div>
         <Label>Organization</Label>
-        <select
-          className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          {...register('organizationId')}
-        >
-          <option value="">Select organization…</option>
-          {organizations.map((org: { id: string; name: string }) => (
-            <option key={org.id} value={org.id}>{org.name}</option>
-          ))}
-        </select>
-        {errors.organizationId && <p className="mt-1 text-xs text-red-500">{errors.organizationId.message}</p>}
+        {organizations.length === 0 ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            You have no organizations yet.{' '}
+            <a href="/organizations" className="font-semibold underline hover:text-amber-900">
+              Create one first
+            </a>{' '}
+            before adding an event.
+          </div>
+        ) : (
+          <>
+            <select
+              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              {...register('organizationId')}
+            >
+              <option value="">Select organization…</option>
+              {organizations.map((org: { id: string; name: string }) => (
+                <option key={org.id} value={org.id}>{org.name}</option>
+              ))}
+            </select>
+            {errors.organizationId && <p className="mt-1 text-xs text-red-500">{errors.organizationId.message}</p>}
+          </>
+        )}
       </div>
 
       {mutation.isError && (

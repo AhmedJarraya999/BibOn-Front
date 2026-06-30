@@ -1,16 +1,15 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Globe, Phone, MapPin, Link } from 'lucide-react';
 import api from '@/lib/api';
+import { type Organization } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { OrganizationForm } from '@/components/organizations/organization-form';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
-
-interface Organization { id: string; name: string; ownerId: string; }
 
 export default function OrganizationsPage() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -56,27 +55,74 @@ export default function OrganizationsPage() {
           {organizations.map((org) => (
             <div
               key={org.id}
-              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                  <Building2 className="h-5 w-5" />
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {org.logoUrl ? (
+                      <img src={org.logoUrl} alt={org.name} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{org.name}</p>
+                      {org.description && (
+                        <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{org.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-shrink-0 gap-1">
+                    <button
+                      onClick={() => setEditTarget(org)}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(org)}
+                      className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-                <span className="font-medium text-gray-900">{org.name}</span>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setEditTarget(org)}
-                  className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(org)}
-                  className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+
+                {(org.phone || org.address || org.website || org.facebook || org.instagram) && (
+                  <div className="mt-3 space-y-1 border-t border-gray-100 pt-3">
+                    {org.phone && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Phone className="h-3 w-3 flex-shrink-0" />
+                        <span>{org.phone}</span>
+                      </div>
+                    )}
+                    {org.address && (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{org.address}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      {org.website && (
+                        <a href={org.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                          <Globe className="h-3 w-3" /> Website
+                        </a>
+                      )}
+                      {org.facebook && (
+                        <a href={org.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                          <Link className="h-3 w-3" /> Facebook
+                        </a>
+                      )}
+                      {org.instagram && (
+                        <a href={org.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:underline">
+                          <Link className="h-3 w-3" /> Instagram
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

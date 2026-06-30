@@ -1,12 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
+import { useOrg } from '@/lib/org-context';
+import { Logo } from '@/components/ui/logo';
 
 const organizerLinks = [
+  { href: '/dashboard', label: 'Live Dashboard', icon: Activity },
   { href: '/organizations', label: 'Organizations', icon: Building2 },
   { href: '/events', label: 'Events', icon: Calendar },
   { href: '/races', label: 'Races', icon: Flag },
@@ -22,6 +25,63 @@ const volunteerLinks = [
   { href: '/distribution', label: 'Distribution', icon: Package },
 ];
 
+function OrgSwitcher() {
+  const { activeOrg, setActiveOrg, organizations } = useOrg();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  if (organizations.length === 0) return null;
+
+  return (
+    <div ref={ref} className="relative border-b border-gray-200 px-3 py-2">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-gray-50"
+      >
+        {activeOrg?.logoUrl ? (
+          <img src={activeOrg.logoUrl} alt="" className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
+        ) : (
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+            <Building2 className="h-3.5 w-3.5" />
+          </div>
+        )}
+        <span className="flex-1 truncate text-sm font-medium text-gray-800">{activeOrg?.name ?? 'Select org'}</span>
+        <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+      </button>
+
+      {open && (
+        <div className="absolute left-3 right-3 top-full z-50 mt-1 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+          {organizations.map((org) => (
+            <button
+              key={org.id}
+              onClick={() => { setActiveOrg(org); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
+            >
+              {org.logoUrl ? (
+                <img src={org.logoUrl} alt="" className="h-6 w-6 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <Building2 className="h-3 w-3" />
+                </div>
+              )}
+              <span className="flex-1 truncate text-gray-800">{org.name}</span>
+              {activeOrg?.id === org.id && <Check className="h-3.5 w-3.5 text-blue-600" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NavContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const user = getUser();
@@ -31,13 +91,15 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   return (
     <>
       <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
-        <span className="text-lg font-bold text-blue-600">RacePlatform</span>
+        <Logo size="sm" />
         {onClose && (
           <button onClick={onClose} className="rounded p-1 text-gray-400 hover:bg-gray-100 lg:hidden">
             <X className="h-5 w-5" />
           </button>
         )}
       </div>
+
+      {!isVolunteer && <OrgSwitcher />}
 
       <nav className="flex-1 space-y-1 p-4">
         {links.map(({ href, label, icon: Icon }) => (
@@ -82,7 +144,7 @@ export function Sidebar() {
     <>
       {/* Mobile top bar */}
       <div className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
-        <span className="text-lg font-bold text-blue-600">RacePlatform</span>
+        <Logo size="sm" />
         <button
           onClick={() => setOpen(true)}
           className="rounded-md p-2 text-gray-500 hover:bg-gray-100"

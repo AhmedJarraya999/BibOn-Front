@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/register'];
+const PUBLIC_PATHS = ['/', '/login', '/register'];
 
 const ROLE_PATHS: Record<string, string[]> = {
   PARTICIPANT: ['/portal'],
   VOLUNTEER: ['/checkin', '/finish', '/distribution'],
-  ORGANIZER: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance'],
-  ADMIN: ['/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/checkin', '/finish', '/distribution', '/portal'],
+  ORGANIZER: ['/dashboard', '/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance'],
+  ADMIN: ['/dashboard', '/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/checkin', '/finish', '/distribution', '/portal'],
 };
 
 export function middleware(req: NextRequest) {

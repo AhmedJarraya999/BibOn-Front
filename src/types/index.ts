@@ -7,6 +7,19 @@ export interface User {
   role: UserRole;
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  ownerId: string;
+  logoUrl?: string;
+  description?: string;
+  website?: string;
+  phone?: string;
+  address?: string;
+  facebook?: string;
+  instagram?: string;
+}
+
 export interface Event {
   id: string;
   name: string;

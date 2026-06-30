@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { type Event } from '@/types';
+import { useOrg } from '@/lib/org-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,11 +23,12 @@ export default function EventsPage() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const confirm = useConfirm();
+  const { activeOrg } = useOrg();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['events', page, search],
+    queryKey: ['events', page, search, activeOrg?.id],
     queryFn: () =>
-      api.get('/events', { params: { page, limit: 20, search: search || undefined } }).then((r) => r.data),
+      api.get('/events', { params: { page, limit: 20, search: search || undefined, organizationId: activeOrg?.id } }).then((r) => r.data),
   });
 
   const events: Event[] = data?.data ?? [];
@@ -46,7 +48,10 @@ export default function EventsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Events</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Events</h1>
+          {activeOrg && <p className="mt-0.5 text-sm text-gray-500">{activeOrg.name}</p>}
+        </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> New Event
         </Button>

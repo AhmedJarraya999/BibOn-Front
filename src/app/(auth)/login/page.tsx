@@ -7,13 +7,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { saveSession } from '@/lib/auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Email invalide'),
+  password: z.string().min(1, 'Mot de passe requis'),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -32,40 +29,61 @@ export default function LoginPage() {
       const role = res.data.user.role;
       if (role === 'VOLUNTEER') router.push('/checkin');
       else if (role === 'PARTICIPANT') router.push('/portal/my-registrations');
-      else router.push('/events');
+      else router.push('/dashboard');
     } catch {
-      setError('Invalid email or password');
+      setError('Email ou mot de passe incorrect');
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="mb-2 text-center text-2xl font-bold text-blue-600">RacePlatform</div>
-        <CardTitle className="text-center text-xl">Sign in to your account</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <Input type="email" placeholder="you@example.com" {...register('email')} />
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+    <div>
+      <h1 className="text-2xl font-black text-gray-900 mb-1">Connexion</h1>
+      <p className="text-sm text-gray-500 mb-8">Bon retour — السباق بدا 👋</p>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            placeholder="vous@exemple.com"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            {...register('email')}
+          />
+          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Mot de passe</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            {...register('password')}
+          />
+          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+        </div>
+
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+            {error}
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-            <Input type="password" placeholder="••••••••" {...register('password')} />
-            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
-          </div>
-          {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline">Register</Link>
-        </p>
-      </CardContent>
-    </Card>
+        )}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded-xl bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
+        >
+          {isSubmitting ? 'Connexion…' : 'Se connecter'}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-gray-500">
+        Pas encore de compte ?{' '}
+        <Link href="/register" className="font-medium text-red-600 hover:underline">
+          Créer un compte
+        </Link>
+      </p>
+    </div>
   );
 }
