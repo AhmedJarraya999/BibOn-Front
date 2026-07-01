@@ -67,6 +67,28 @@ export interface Volunteer {
   user?: User;
 }
 
+export type CheckpointType = 'TIMING' | 'EAU' | 'RAVITO' | 'TIMING_RAVITO';
+
+export interface CheckpointAssignment {
+  id: string;
+  volunteerId: string;
+  volunteer: Volunteer & { user: User };
+}
+
+export interface Checkpoint {
+  id: string;
+  raceId: string;
+  name: string;
+  order: number;
+  type: CheckpointType;
+  cutoffTime?: string;
+  items: string[];
+  latitude?: number;
+  longitude?: number;
+  assignments: CheckpointAssignment[];
+  _count?: { scans: number };
+}
+
 export interface Distribution {
   id: string;
   itemType: string;

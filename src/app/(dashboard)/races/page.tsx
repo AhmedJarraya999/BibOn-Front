@@ -1,7 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, MapPin } from 'lucide-react';
 import api from '@/lib/api';
 import { type Race } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,14 @@ import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/utils';
+import { CheckpointPanel } from '@/components/checkpoints/checkpoint-panel';
 
 export default function RacesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Race | null>(null);
+  const [checkpointRace, setCheckpointRace] = useState<Race | null>(null);
   const queryClient = useQueryClient();
   const toast = useToast();
   const confirm = useConfirm();
@@ -77,6 +79,13 @@ export default function RacesPage() {
                   </div>
                   <div className="flex gap-1 ml-2">
                     <button
+                      onClick={() => setCheckpointRace(race)}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                      title="Gérer les checkpoints"
+                    >
+                      <MapPin className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => setEditTarget(race)}
                       className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                     >
@@ -114,6 +123,12 @@ export default function RacesPage() {
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Race">
         {editTarget && (
           <RaceForm race={editTarget} onSuccess={() => setEditTarget(null)} />
+        )}
+      </Modal>
+
+      <Modal open={!!checkpointRace} onClose={() => setCheckpointRace(null)} title="Checkpoints" size="lg">
+        {checkpointRace && (
+          <CheckpointPanel race={checkpointRace} eventId={checkpointRace.eventId} />
         )}
       </Modal>
     </div>
