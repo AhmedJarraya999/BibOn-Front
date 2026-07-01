@@ -29,13 +29,17 @@ api.interceptors.response.use(
           );
           localStorage.setItem('access_token', data.access_token);
           localStorage.setItem('refresh_token', data.refresh_token);
+          const maxAge = 60 * 60 * 24 * 30;
+          document.cookie = `access_token=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
           original.headers.Authorization = `Bearer ${data.access_token}`;
           return api(original);
         } catch {
           localStorage.clear();
           document.cookie = 'access_token=; path=/; max-age=0';
           document.cookie = 'user_role=; path=/; max-age=0';
-          window.location.href = '/login';
+          const pub = ['/', '/login', '/register'];
+          const onPublic = pub.some((p) => p === '/' ? window.location.pathname === '/' : window.location.pathname.startsWith(p));
+          if (!onPublic) window.location.href = '/login';
         }
       }
     }

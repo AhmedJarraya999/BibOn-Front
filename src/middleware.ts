@@ -12,9 +12,10 @@ const ROLE_PATHS: Record<string, string[]> = {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
+  const isPublic = PUBLIC_PATHS.some((p) =>
+    p === '/' ? pathname === '/' : pathname.startsWith(p)
+  );
+  if (isPublic) return NextResponse.next();
 
   const token = req.cookies.get('access_token')?.value;
   const role = req.cookies.get('user_role')?.value;

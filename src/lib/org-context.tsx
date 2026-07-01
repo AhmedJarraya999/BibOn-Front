@@ -21,11 +21,16 @@ const OrgContext = createContext<OrgContextType>({
 
 export function OrgProvider({ children }: { children: ReactNode }) {
   const [activeOrg, setActiveOrgState] = useState<Organization | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ['organizations'],
     queryFn: () => api.get('/organizations').then((r) => r.data),
-    enabled: isLoggedIn(),
+    enabled: loggedIn,
   });
 
   const organizations: Organization[] = data?.data ?? data ?? [];
