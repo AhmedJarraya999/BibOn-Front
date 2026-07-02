@@ -1,9 +1,9 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2, MapPin } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, MapPin, Flag } from 'lucide-react';
 import api from '@/lib/api';
-import { type Race } from '@/types';
+import { type Race, type Event } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { CheckpointPanel } from '@/components/checkpoints/checkpoint-panel';
 export default function RacesPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [selectedEventId, setSelectedEventId] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Race | null>(null);
   const [checkpointRace, setCheckpointRace] = useState<Race | null>(null);
@@ -25,14 +26,29 @@ export default function RacesPage() {
   const toast = useToast();
   const confirm = useConfirm();
 
+  const { data: eventsData } = useQuery({
+    queryKey: ['events', 1, ''],
+    queryFn: () => api.get('/events', { params: { limit: 100 } }).then((r) => r.data),
+  });
+  const events: Event[] = eventsData?.data ?? [];
+
   const { data, isLoading } = useQuery({
-    queryKey: ['races', page, search],
+    queryKey: ['races', page, search, selectedEventId],
     queryFn: () =>
-      api.get('/races', { params: { page, limit: 20, search: search || undefined } }).then((r) => r.data),
+      api.get('/races', {
+        params: {
+          page,
+          limit: 20,
+          search: search || undefined,
+          eventId: selectedEventId || undefined,
+        },
+      }).then((r) => r.data),
   });
 
   const races: Race[] = data?.data ?? [];
   const meta = data?.meta;
+
+  const selectedEvent = events.find((e) => e.id === selectedEventId);
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/races/${id}`),
@@ -48,20 +64,44 @@ export default function RacesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Races</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Races</h1>
+          {selectedEvent && (
+            <p className="mt-0.5 text-sm text-gray-500">{selectedEvent.name}</p>
+          )}
+        </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> New Race
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <Input
-          className="pl-9"
-          placeholder="Search races…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
+      {/* Filters */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        {/* Event filter */}
+        <div className="flex items-center gap-2 min-w-[220px]">
+          <Flag className="h-4 w-4 text-gray-400 shrink-0" />
+          <select
+            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedEventId}
+            onChange={(e) => { setSelectedEventId(e.target.value); setPage(1); }}
+          >
+            <option value="">All events</option>
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>{e.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Input
+            className="pl-9"
+            placeholder="Search races…"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
       </div>
 
       {isLoading ? (
@@ -103,7 +143,17 @@ export default function RacesPage() {
             </Card>
           ))}
           {races.length === 0 && (
-            <p className="col-span-full text-center text-gray-500 py-12">No races found.</p>
+            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+              <Flag className="h-10 w-10 text-gray-200 mb-3" />
+              <p className="text-gray-500">
+                {selectedEventId ? 'No races for this event yet.' : 'No races found.'}
+              </p>
+              {selectedEventId && (
+                <Button className="mt-4" size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add first race
+                </Button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -117,7 +167,7 @@ export default function RacesPage() {
       )}
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="New Race">
-        <RaceForm onSuccess={() => setCreateOpen(false)} />
+        <RaceForm onSuccess={() => setCreateOpen(false)} defaultEventId={selectedEventId} />
       </Modal>
 
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Race">

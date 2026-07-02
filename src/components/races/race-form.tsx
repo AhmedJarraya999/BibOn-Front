@@ -31,7 +31,7 @@ export function RaceForm({ race, defaultEventId, onSuccess }: Props) {
   const toast = useToast();
 
   const { data: eventsData } = useQuery({
-    queryKey: ['events-all'],
+    queryKey: ['events', 1, ''],
     queryFn: () => api.get('/events', { params: { limit: 100 } }).then((r) => r.data),
   });
   const events = eventsData?.data ?? [];

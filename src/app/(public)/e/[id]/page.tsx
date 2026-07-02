@@ -108,7 +108,7 @@ export default function PublicEventPage() {
                       {race.startTime && (
                         <p className="text-sm text-gray-400 flex items-center gap-1 mt-0.5">
                           <Clock className="h-3.5 w-3.5" />
-                          {new Date(race.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                          {`${String(new Date(race.startTime).getUTCHours()).padStart(2,'0')}:${String(new Date(race.startTime).getUTCMinutes()).padStart(2,'0')}`}
                         </p>
                       )}
                     </div>
