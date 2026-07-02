@@ -10,6 +10,7 @@ interface OrgContextType {
   setActiveOrg: (org: Organization) => void;
   organizations: Organization[];
   isLoading: boolean;
+  isReady: boolean;
 }
 
 const OrgContext = createContext<OrgContextType>({
@@ -17,14 +18,17 @@ const OrgContext = createContext<OrgContextType>({
   setActiveOrg: () => {},
   organizations: [],
   isLoading: false,
+  isReady: false,
 });
 
 export function OrgProvider({ children }: { children: ReactNode }) {
   const [activeOrg, setActiveOrgState] = useState<Organization | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     setLoggedIn(isLoggedIn());
+    setAuthChecked(true);
   }, []);
 
   const { data, isLoading } = useQuery({
@@ -47,8 +51,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     setActiveOrgState(org);
   };
 
+  // isReady: auth check done + (not logged in OR orgs loaded AND activeOrg is resolved)
+  const isReady = authChecked && (!loggedIn || (!isLoading && (activeOrg !== null || organizations.length === 0)));
+
   return (
-    <OrgContext.Provider value={{ activeOrg, setActiveOrg, organizations, isLoading }}>
+    <OrgContext.Provider value={{ activeOrg, setActiveOrg, organizations, isLoading, isReady }}>
       {children}
     </OrgContext.Provider>
   );

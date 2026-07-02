@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_PATHS = ['/', '/login', '/register'];
+const PUBLIC_PATHS = ['/', '/login', '/register', '/e'];
 
 const ROLE_PATHS: Record<string, string[]> = {
   PARTICIPANT: ['/portal'],

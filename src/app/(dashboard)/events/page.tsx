@@ -1,7 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, ImageIcon, Share2 } from 'lucide-react';
 import api from '@/lib/api';
 import { type Event } from '@/types';
 import { useOrg } from '@/lib/org-context';
@@ -26,9 +26,9 @@ export default function EventsPage() {
   const { activeOrg } = useOrg();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['events', page, search, activeOrg?.id],
+    queryKey: ['events', page, search],
     queryFn: () =>
-      api.get('/events', { params: { page, limit: 20, search: search || undefined, organizationId: activeOrg?.id } }).then((r) => r.data),
+      api.get('/events', { params: { page, limit: 20, search: search || undefined } }).then((r) => r.data),
   });
 
   const events: Event[] = data?.data ?? [];
@@ -72,17 +72,33 @@ export default function EventsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <Card key={event.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-6">
+            <Card key={event.id} className="hover:shadow-md transition-shadow overflow-hidden">
+              {event.logoUrl ? (
+                <div className="h-36 w-full bg-gray-50 overflow-hidden">
+                  <img src={event.logoUrl} alt={event.name} className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="h-36 w-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                  <ImageIcon className="h-12 w-12 text-indigo-200" />
+                </div>
+              )}
+              <CardContent className="pt-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h2 className="font-semibold text-gray-900">{event.name}</h2>
-                    <p className="mt-1 text-sm text-gray-500">{event.location}</p>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-semibold text-gray-900 truncate">{event.name}</h2>
+                    <p className="mt-1 text-sm text-gray-500 truncate">{event.location}</p>
                     <p className="mt-2 text-xs text-gray-400">
-                      {formatDate(event.startDate)} → {formatDate(event.endDate)}
+                      {formatDate(event.startDate ?? event.date)}
                     </p>
                   </div>
-                  <div className="flex gap-1 ml-2">
+                  <div className="flex gap-1 ml-2 flex-shrink-0">
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/e/${event.slug ?? event.id}`); toast.success('Link copied!'); }}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-blue-600"
+                      title="Copy public link"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={() => setEditTarget(event)}
                       className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"

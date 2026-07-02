@@ -25,7 +25,11 @@ export interface Event {
   name: string;
   location: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
+  slug?: string;
   paymentMode: 'PREPAID_ONLY' | 'PREPAID_OR_ONSITE';
+  logoUrl?: string;
   organizationId: string;
 }
 
@@ -51,12 +55,14 @@ export interface Registration {
   id: string;
   bibNumber: string;
   status: string;
+  paymentStatus?: string;
   raceId: string;
   participantId: string;
   startTime?: string;
   finishTime?: string;
   participant?: Participant;
   race?: Race;
+  distributions?: Distribution[];
 }
 
 export interface Volunteer {

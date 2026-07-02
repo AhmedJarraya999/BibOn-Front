@@ -1,12 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const params = useSearchParams();
   const paymentId = params.get('payment_id');
   const registrationId = params.get('registrationId');
@@ -44,5 +44,18 @@ export default function PaymentSuccessPage() {
         We could not verify your payment. Please contact the event organizer with your registration ID.
       </p>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-gray-500">
+        <Loader2 className="h-10 w-10 animate-spin" />
+        <p>Loading…</p>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

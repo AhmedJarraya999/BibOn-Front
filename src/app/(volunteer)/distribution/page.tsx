@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 
-const QrScanner = dynamic(() => import('@/components/checkin/qr-scanner'), { ssr: false });
+const QrScanner = dynamic(() => import('@/components/checkin/qr-scanner').then((m) => m.QrScanner), { ssr: false });
 
 const ITEMS = ['BIB_KIT', 'TSHIRT', 'MEDAL', 'RAVITO', 'OTHER'] as const;
 
@@ -128,7 +128,7 @@ export default function DistributionPage() {
                   {scanning ? 'Cancel Scan' : 'Scan QR Code'}
                 </Button>
                 {scanning && (
-                  <QrScanner onScan={handleQrScan} onError={() => setScanning(false)} />
+                  <QrScanner onScan={handleQrScan} />
                 )}
 
                 {/* Manual search */}
