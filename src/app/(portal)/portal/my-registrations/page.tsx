@@ -1,6 +1,8 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { Trophy, Clock, Flag, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Trophy, Clock, Flag, CheckCircle, XCircle, AlertCircle, CreditCard, QrCode, X } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import api from '@/lib/api';
 import { type Registration, type Participant } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +28,61 @@ const statusIcon: Record<string, React.ReactNode> = {
   DISQUALIFIED: <XCircle className="h-4 w-4" />,
 };
 
+const paymentVariant: Record<string, 'success' | 'warning' | 'danger'> = {
+  PAID: 'success',
+  PENDING: 'warning',
+  FAILED: 'danger',
+};
+
+function QRModal({ registration, onClose }: { registration: Registration; onClose: () => void }) {
+  const qrData = JSON.stringify({
+    registrationId: registration.id,
+    bibNumber: registration.bibNumber,
+    participant: registration.participant?.fullName,
+    race: registration.race?.name,
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100">
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Your Race Pass</p>
+          <h2 className="mt-1 text-xl font-bold text-gray-900">{registration.race?.name}</h2>
+          <p className="text-sm text-gray-500">{registration.participant?.fullName}</p>
+        </div>
+
+        {/* Bib number */}
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 text-white">
+          <div>
+            <p className="text-xs font-semibold opacity-70">BIB</p>
+            <p className="text-2xl font-black leading-none">{registration.bibNumber ?? '—'}</p>
+          </div>
+        </div>
+
+        {/* QR Code */}
+        <div className="flex justify-center rounded-xl border border-gray-100 bg-gray-50 p-4">
+          <QRCodeSVG value={qrData} size={180} level="M" />
+        </div>
+
+        <p className="mt-4 text-xs text-gray-400">Show this QR code at bib pickup and check-in</p>
+
+        <div className="mt-4 flex justify-center">
+          <Badge variant={paymentVariant[registration.paymentStatus ?? 'PENDING'] ?? 'warning'}>
+            {registration.paymentStatus === 'PAID' ? '✓ Payment confirmed' : '⏳ Payment pending'}
+          </Badge>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MyRegistrationsPage() {
+  const [qrRegistration, setQrRegistration] = useState<Registration | null>(null);
+
   const { data: participant, isLoading: profileLoading, error: profileError } = useQuery<Participant>({
     queryKey: ['participant-me'],
     queryFn: () => api.get('/participants/me').then((r) => r.data),
@@ -68,6 +124,8 @@ export default function MyRegistrationsPage() {
 
   return (
     <div className="space-y-6">
+      {qrRegistration && <QRModal registration={qrRegistration} onClose={() => setQrRegistration(null)} />}
+
       <h1 className="text-2xl font-bold text-gray-900">My Registrations</h1>
 
       {/* Profile card */}
@@ -109,26 +167,49 @@ export default function MyRegistrationsPage() {
           <p className="mt-1 text-sm text-gray-400">Contact your event organizer to register for a race.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {registrations.map((r) => (
-            <Card key={r.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-lg">
-                      {r.bibNumber}
-                    </div>
+            <Card key={r.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <CardContent className="p-0">
+                <div className="flex items-stretch">
+                  {/* Bib number strip */}
+                  <div className="flex w-20 shrink-0 flex-col items-center justify-center bg-blue-600 py-5 text-white">
+                    <p className="text-xs font-semibold uppercase opacity-70">Bib</p>
+                    <p className="text-2xl font-black leading-tight">{r.bibNumber ?? '—'}</p>
+                  </div>
+
+                  {/* Main content */}
+                  <div className="flex flex-1 items-center justify-between gap-4 px-5 py-4">
                     <div>
                       <p className="font-semibold text-gray-900">{r.race?.name ?? 'Race'}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="mt-0.5 text-sm text-gray-500">
                         {r.race?.distance ? `${r.race.distance} km` : ''}
                         {r.race?.startTime ? ` · ${formatDateTime(r.race.startTime)}` : ''}
                       </p>
+                      {/* Payment status */}
+                      <div className="mt-2 flex items-center gap-2">
+                        <CreditCard className="h-3.5 w-3.5 text-gray-400" />
+                        <Badge variant={paymentVariant[r.paymentStatus ?? 'PENDING'] ?? 'warning'} >
+                          {r.paymentStatus ?? 'PENDING'}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400">{statusIcon[r.status]}</span>
-                    <Badge variant={statusVariant[r.status] ?? 'default'}>{r.status.replace('_', ' ')}</Badge>
+
+                    <div className="flex flex-col items-end gap-2">
+                      {/* Race status */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">{statusIcon[r.status]}</span>
+                        <Badge variant={statusVariant[r.status] ?? 'default'}>{r.status.replace('_', ' ')}</Badge>
+                      </div>
+                      {/* QR button */}
+                      <button
+                        onClick={() => setQrRegistration(r)}
+                        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                      >
+                        <QrCode className="h-3.5 w-3.5" />
+                        Show QR
+                      </button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

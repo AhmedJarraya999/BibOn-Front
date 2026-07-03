@@ -12,8 +12,10 @@ import { useOrg } from '@/lib/org-context';
 
 const PERMISSIONS = [
   { value: 'CHECK_IN', label: 'Check-in', desc: 'Scan bibs at the start line' },
+  { value: 'BIB_DISTRIBUTION', label: 'Bib distribution', desc: 'Confirm arrival, collect payment, assign and hand out bib kits' },
+  { value: 'RAVITO', label: 'Ravito station', desc: 'Hand out food and drinks at refreshment points' },
+  { value: 'MEDAL', label: 'Medal distribution', desc: 'Hand out medals to finishers at the finish line' },
   { value: 'CHECKPOINT', label: 'Checkpoint', desc: 'Scan runners at control points' },
-  { value: 'DISTRIBUTION', label: 'Distribution', desc: 'Hand out medals, bibs, t-shirts' },
   { value: 'FINISH_LINE', label: 'Finish line', desc: 'Record finish times' },
 ] as const;
 
@@ -21,6 +23,7 @@ const schema = z.object({
   email: z.string().email('Invalid email'),
   name: z.string().optional(),
   eventId: z.string().min(1, 'Select an event'),
+  raceId: z.string().optional(),
   permissions: z.array(z.string()).min(1, 'Select at least one role'),
 });
 type FormData = z.infer<typeof schema>;
@@ -45,6 +48,14 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
   });
 
   const selectedPerms = watch('permissions');
+  const selectedEventId = watch('eventId');
+
+  const { data: racesData } = useQuery({
+    queryKey: ['races-for-event', selectedEventId],
+    queryFn: () => api.get('/races', { params: { eventId: selectedEventId, limit: 100 } }).then((r) => r.data),
+    enabled: !!selectedEventId,
+  });
+  const races = racesData?.data ?? [];
 
   const togglePerm = (val: string) => {
     const curr = selectedPerms ?? [];
@@ -57,7 +68,7 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const payload = { ...data, name: data.name || undefined };
+      const payload = { ...data, name: data.name || undefined, raceId: data.raceId || undefined };
       await api.post('/volunteers/invite', payload);
       toast.success('Invitation sent successfully!');
       onSuccess();
@@ -98,6 +109,23 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
         </select>
         {errors.eventId && <p className="text-xs text-red-500 mt-1">{errors.eventId.message}</p>}
       </div>
+
+      {selectedEventId && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Race <span className="text-gray-400">(optional — leave blank for all races in the event)</span>
+          </label>
+          <select
+            {...register('raceId')}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value="">All races</option>
+            {races.map((r: { id: string; name: string; distance: number }) => (
+              <option key={r.id} value={r.id}>{r.name} ({r.distance} km)</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Station / Role</label>

@@ -15,9 +15,14 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 
 const PERM_LABELS: Record<string, string> = {
   CHECK_IN: 'Check-in',
+  BIB_DISTRIBUTION: 'Bib distribution',
+  RAVITO: 'Ravito station',
+  MEDAL: 'Medal distribution',
   CHECKPOINT: 'Checkpoint',
-  DISTRIBUTION: 'Distribution',
   FINISH_LINE: 'Finish line',
+  FINISH: 'Finish line',
+  DISQUALIFY: 'Disqualify',
+  DISTRIBUTE: 'Distribute items',
 };
 
 export default function VolunteersPage() {
@@ -73,6 +78,7 @@ export default function VolunteersPage() {
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{v.user?.email ?? '—'}</td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {(v as any).event?.name ?? v.eventId}
+                    {(v as any).race && <span className="text-gray-400"> · {(v as any).race.name}</span>}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex flex-wrap gap-1">

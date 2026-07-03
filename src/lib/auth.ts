@@ -3,6 +3,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: string;
+  permissions?: string[];
 }
 
 export function saveSession(accessToken: string, refreshToken: string, user: AuthUser) {

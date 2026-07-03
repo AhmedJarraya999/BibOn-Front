@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check } from 'lucide-react';
+import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check, Utensils, Award } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
@@ -19,10 +19,12 @@ const organizerLinks = [
   { href: '/attendance', label: 'Attendance', icon: BarChart2 },
 ];
 
-const volunteerLinks = [
-  { href: '/checkin', label: 'Check-in', icon: QrCode },
-  { href: '/finish', label: 'Finish Line', icon: Timer },
-  { href: '/distribution', label: 'Distribution', icon: Package },
+const allVolunteerLinks = [
+  { href: '/checkin', label: 'Check-in', icon: QrCode, permission: 'CHECK_IN' },
+  { href: '/distribution', label: 'Bib Distribution', icon: Package, permission: 'BIB_DISTRIBUTION' },
+  { href: '/ravito', label: 'Ravito Station', icon: Utensils, permission: 'RAVITO' },
+  { href: '/medals', label: 'Medal Distribution', icon: Award, permission: 'MEDAL' },
+  { href: '/finish', label: 'Finish Line', icon: Timer, permission: 'FINISH' },
 ];
 
 function OrgSwitcher() {
@@ -86,6 +88,10 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const user = getUser();
   const isVolunteer = user?.role === 'VOLUNTEER';
+  const volunteerPerms: string[] = user?.permissions ?? [];
+  const volunteerLinks = isVolunteer
+    ? allVolunteerLinks.filter((l) => volunteerPerms.includes(l.permission))
+    : [];
   const links = isVolunteer ? volunteerLinks : organizerLinks;
 
   return (

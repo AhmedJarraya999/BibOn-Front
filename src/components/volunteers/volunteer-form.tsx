@@ -9,7 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 
-const PERMISSIONS = ['CHECK_IN', 'FINISH', 'DISQUALIFY', 'DISTRIBUTE'] as const;
+const PERMISSIONS = [
+  { value: 'CHECK_IN', label: 'Check-in' },
+  { value: 'BIB_DISTRIBUTION', label: 'Bib distribution' },
+  { value: 'RAVITO', label: 'Ravito station' },
+  { value: 'MEDAL', label: 'Medal distribution' },
+  { value: 'FINISH', label: 'Finish line' },
+  { value: 'DISQUALIFY', label: 'Disqualify' },
+] as const;
 
 const schema = z.object({
   userId: z.string().min(1, 'User is required'),
@@ -104,19 +111,19 @@ export function VolunteerForm({ volunteer, onSuccess }: Props) {
           render={({ field }) => (
             <div className="mt-1 space-y-2">
               {PERMISSIONS.map((perm) => (
-                <label key={perm} className="flex items-center gap-3 cursor-pointer">
+                <label key={perm.value} className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    checked={field.value.includes(perm)}
+                    checked={field.value.includes(perm.value)}
                     onChange={(e) => {
                       const next = e.target.checked
-                        ? [...field.value, perm]
-                        : field.value.filter((p) => p !== perm);
+                        ? [...field.value, perm.value]
+                        : field.value.filter((p) => p !== perm.value);
                       field.onChange(next);
                     }}
                   />
-                  <span className="text-sm text-gray-700">{perm.replace('_', ' ')}</span>
+                  <span className="text-sm text-gray-700">{perm.label}</span>
                 </label>
               ))}
             </div>

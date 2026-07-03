@@ -5,6 +5,7 @@ import { ClipboardList, LogOut, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
+import { Logo } from '@/components/ui/logo';
 
 const links = [
   { href: '/portal/my-registrations', label: 'My Registrations', icon: ClipboardList },
@@ -17,7 +18,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   return (
     <>
       <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
-        <span className="text-lg font-bold text-blue-600">RacePlatform</span>
+        <Logo size="sm" />
         {onClose && (
           <button onClick={onClose} className="rounded p-1 text-gray-400 hover:bg-gray-100 lg:hidden">
             <X className="h-5 w-5" />
@@ -76,7 +77,7 @@ export function PortalSidebar() {
     <>
       {/* Mobile top bar */}
       <div className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
-        <span className="text-lg font-bold text-blue-600">RacePlatform</span>
+        <Logo size="sm" />
         <button
           onClick={() => setOpen(true)}
           className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
