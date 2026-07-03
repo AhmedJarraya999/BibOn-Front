@@ -12,14 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002/api';
 const publicApi = axios.create({ baseURL: BASE_URL });
 
 const schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
   email: z.string().email('Invalid email'),
   birthdate: z.string().min(1, 'Birthdate is required'),
-  gender: z.enum(['M', 'F'], { error: 'Gender is required' }),
+  gender: z.enum(['M', 'F'], { message: 'Gender is required' }),
   raceId: z.string().min(1, 'Please select a race'),
 });
 
@@ -36,9 +36,9 @@ export default function PublicRegisterPage() {
   });
 
   const { data: racesData } = useQuery({
-    queryKey: ['public-races', eventId],
-    queryFn: () => publicApi.get('/races', { params: { eventId, limit: 50 } }).then((r) => r.data),
-    enabled: !!eventId,
+    queryKey: ['public-races', event?.id],
+    queryFn: () => publicApi.get('/races', { params: { eventId: event?.id, limit: 50 } }).then((r) => r.data),
+    enabled: !!event?.id,
   });
   const races: Race[] = racesData?.data ?? [];
 

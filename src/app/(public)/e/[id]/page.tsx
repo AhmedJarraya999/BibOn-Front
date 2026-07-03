@@ -7,7 +7,7 @@ import { type Event, type Race } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002/api';
 const publicApi = axios.create({ baseURL: BASE_URL });
 
 export default function PublicEventPage() {
@@ -20,9 +20,9 @@ export default function PublicEventPage() {
   });
 
   const { data: racesData, isLoading: racesLoading } = useQuery({
-    queryKey: ['public-races', id],
-    queryFn: () => publicApi.get('/races', { params: { eventId: id, limit: 50 } }).then((r) => r.data),
-    enabled: !!id,
+    queryKey: ['public-races', event?.id],
+    queryFn: () => publicApi.get('/races', { params: { eventId: event?.id, limit: 50 } }).then((r) => r.data),
+    enabled: !!event?.id,
   });
   const races: Race[] = racesData?.data ?? [];
 
