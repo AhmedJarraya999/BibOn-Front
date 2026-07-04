@@ -20,7 +20,10 @@ const schema = z.object({
   email: z.string().email('Invalid email'),
   birthdate: z.string().min(1, 'Birthdate is required'),
   gender: z.enum(['M', 'F'], { message: 'Gender is required' }),
+  phone: z.string().optional(),
+  country: z.string().optional(),
   raceId: z.string().min(1, 'Please select a race'),
+  lieuDeRetrait: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -189,6 +192,45 @@ export default function PublicRegisterPage() {
               {errors.gender && <p className="mt-1 text-xs text-red-500">{errors.gender.message}</p>}
             </div>
           </div>
+
+          <div>
+            <Label>Phone Number <span className="text-gray-400 font-normal">(optional)</span></Label>
+            <Input type="tel" placeholder="+216 XX XXX XXX" {...register('phone')} />
+          </div>
+
+          <div>
+            <Label>Nationality</Label>
+            <select className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" {...register('country')}>
+              <option value="Tunisie">🇹🇳 Tunisie</option>
+              <option value="Algérie">🇩🇿 Algérie</option>
+              <option value="Maroc">🇲🇦 Maroc</option>
+              <option value="Libye">🇱🇾 Libye</option>
+              <option value="Égypte">🇪🇬 Égypte</option>
+              <option value="France">🇫🇷 France</option>
+              <option value="Italie">🇮🇹 Italie</option>
+              <option value="Allemagne">🇩🇪 Allemagne</option>
+              <option value="Espagne">🇪🇸 Espagne</option>
+              <option value="Belgique">🇧🇪 Belgique</option>
+              <option value="Suisse">🇨🇭 Suisse</option>
+              <option value="Canada">🇨🇦 Canada</option>
+              <option value="Autre">🌍 Autre</option>
+            </select>
+          </div>
+
+          {eventData.pickupLocations && (eventData.pickupLocations as string[]).length > 0 && (
+            <div>
+              <Label>Lieu de retrait du dossard</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register('lieuDeRetrait')}
+              >
+                <option value="">Choisir un lieu de retrait…</option>
+                {(eventData.pickupLocations as string[]).map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {registerMutation.isError && (
             <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">

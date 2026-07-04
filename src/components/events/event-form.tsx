@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, X } from 'lucide-react';
+import { ImagePlus, Plus, X } from 'lucide-react';
 import api from '@/lib/api';
 import { type Event } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ const schema = z.object({
   date: z.string().min(1, 'Date is required'),
   paymentMode: z.enum(['PREPAID_ONLY', 'PREPAID_OR_ONSITE']),
   logoUrl: z.string().optional(),
+  pickupLocations: z.array(z.string()).optional(),
   organizationId: z.string().min(1, 'Organization is required'),
 });
 
@@ -35,6 +36,8 @@ export function EventForm({ event, onSuccess }: Props) {
   const { activeOrg } = useOrg();
   const fileRef = useRef<HTMLInputElement>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(event?.logoUrl ?? null);
+  const [pickupLocations, setPickupLocations] = useState<string[]>((event as any)?.pickupLocations ?? []);
+  const [pickupInput, setPickupInput] = useState('');
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -86,7 +89,22 @@ export function EventForm({ event, onSuccess }: Props) {
     onError: () => toast.error('Something went wrong.'),
   });
 
-  const onSubmit = (data: FormData) => mutation.mutate(data);
+  function addPickupLocation() {
+    const val = pickupInput.trim();
+    if (!val || pickupLocations.includes(val)) return;
+    const updated = [...pickupLocations, val];
+    setPickupLocations(updated);
+    setValue('pickupLocations', updated);
+    setPickupInput('');
+  }
+
+  function removePickupLocation(loc: string) {
+    const updated = pickupLocations.filter((l) => l !== loc);
+    setPickupLocations(updated);
+    setValue('pickupLocations', updated);
+  }
+
+  const onSubmit = (data: FormData) => mutation.mutate({ ...data, pickupLocations });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -150,6 +168,36 @@ export function EventForm({ event, onSuccess }: Props) {
           <option value="PREPAID_ONLY">Online payment only</option>
         </select>
         {errors.paymentMode && <p className="mt-1 text-xs text-red-500">{errors.paymentMode.message}</p>}
+      </div>
+
+      <div>
+        <Label>Pickup Locations (Lieux de retrait)</Label>
+        <div className="mt-1 space-y-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g. Tunis centre, La Marsa…"
+              value={pickupInput}
+              onChange={(e) => setPickupInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPickupLocation(); } }}
+            />
+            <Button type="button" variant="outline" onClick={addPickupLocation} disabled={!pickupInput.trim()}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          {pickupLocations.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {pickupLocations.map((loc) => (
+                <span key={loc} className="flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-sm text-blue-700">
+                  {loc}
+                  <button type="button" onClick={() => removePickupLocation(loc)} className="text-blue-400 hover:text-blue-600">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-gray-400">Press Enter or + to add each location. Participants will choose one during registration.</p>
+        </div>
       </div>
 
       <div>

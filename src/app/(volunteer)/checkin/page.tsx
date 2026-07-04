@@ -1,220 +1,275 @@
 'use client';
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Search, CheckCircle, XCircle, QrCode, Hash } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QrCode, Hash, CheckCircle, X, AlertTriangle, Users } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import api from '@/lib/api';
-import { type Registration, type Race } from '@/types';
+import { CountryFlag } from '@/components/ui/country-flag';
+import { type Race, type Registration } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { QrScanner } from '@/components/checkin/qr-scanner';
 import { useToast } from '@/components/ui/toast';
-import { formatDateTime } from '@/lib/utils';
+import { sounds } from '@/lib/sounds';
 
-type Mode = 'qr' | 'bib';
+const QrScanner = dynamic(() => import('@/components/checkin/qr-scanner').then((m) => m.QrScanner), { ssr: false });
+
+type Flash = 'success' | 'duplicate' | 'error' | null;
+
+interface CheckedRunner {
+  id: string;
+  name: string;
+  bib: string;
+  at: Date;
+  duplicate?: boolean;
+}
 
 export default function CheckInPage() {
-  const [mode, setMode] = useState<Mode>('qr');
   const [raceId, setRaceId] = useState('');
-  const [bibNumber, setBibNumber] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [bibInput, setBibInput] = useState('');
+  const [flash, setFlash] = useState<Flash>(null);
+  const [flashName, setFlashName] = useState('');
+  const [recentList, setRecentList] = useState<CheckedRunner[]>([]);
+  const [showAll, setShowAll] = useState(false);
+
+  const bibRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (raceId) setTimeout(() => bibRef.current?.focus(), 100);
+  }, [raceId]);
 
   const { data: racesData } = useQuery({
     queryKey: ['races-checkin'],
     queryFn: () => api.get('/races', { params: { limit: 100 } }).then((r) => r.data),
   });
   const races: Race[] = racesData?.data ?? [];
-  const [result, setResult] = useState<Registration | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [checkInLoading, setCheckInLoading] = useState(false);
-  const [checkInDone, setCheckInDone] = useState(false);
-  const toast = useToast();
 
-  const reset = () => {
-    setResult(null);
-    setError('');
-    setCheckInDone(false);
-    setBibNumber('');
+  // All registrations for this race (to show checked-in list)
+  const { data: allRegsData, isLoading: allRegsLoading } = useQuery({
+    queryKey: ['checkin-all-regs', raceId],
+    queryFn: () => api.get('/registrations', { params: { raceId, limit: 1000 } }).then((r) => r.data),
+    enabled: !!raceId,
+    refetchInterval: 15000,
+  });
+  const allRegs: Registration[] = allRegsData?.data ?? [];
+  const checkedInRegs = allRegs.filter((r) => r.status === 'CHECKED_IN');
+
+  const triggerFlash = (type: Flash, name = '') => {
+    setFlash(type);
+    setFlashName(name);
+    setTimeout(() => setFlash(null), 1200);
   };
 
-  // Called when QR code is scanned — contains registration ID
-  const handleQrScan = async (registrationId: string) => {
-    setLoading(true);
-    setError('');
-    setResult(null);
-    setCheckInDone(false);
+  const performCheckIn = async (registrationId: string) => {
     try {
       const res = await api.get(`/registrations/${registrationId}`);
-      setResult(res.data);
+      const reg: Registration = res.data;
+      const name = reg.participant?.fullName ?? reg.participant?.email ?? 'Unknown';
+      const bib = reg.bibNumber ?? '—';
+
+      if (reg.status === 'CHECKED_IN') {
+        sounds.error();
+        triggerFlash('duplicate', name);
+        setRecentList((prev) => [
+          { id: registrationId, name, bib, at: new Date(), duplicate: true },
+          ...prev.filter((p) => p.id !== registrationId),
+        ]);
+        return;
+      }
+
+      await api.post(`/registrations/${registrationId}/check-in`);
+      sounds.success();
+      triggerFlash('success', name);
+      setRecentList((prev) => [{ id: registrationId, name, bib, at: new Date(), country: reg.participant?.country } as any, ...prev]);
+      queryClient.invalidateQueries({ queryKey: ['checkin-all-regs', raceId] });
     } catch {
-      setError('Registration not found for this QR code.');
-    } finally {
-      setLoading(false);
+      sounds.error();
+      triggerFlash('error');
+      toast.error('Registration not found.');
     }
   };
 
-  // Called when bib number is submitted manually
-  const handleBibLookup = async () => {
-    if (!raceId || !bibNumber) return;
-    setLoading(true);
-    setError('');
-    setResult(null);
-    setCheckInDone(false);
+  const handleQrScan = (code: string) => {
+    setScanning(false);
     try {
-      const res = await api.get(`/races/${raceId}/registrations/by-bib/${bibNumber}`);
-      setResult(res.data);
+      const p = JSON.parse(code);
+      performCheckIn(p.registrationId ?? code);
     } catch {
-      setError('Registration not found for this bib number.');
-    } finally {
-      setLoading(false);
+      performCheckIn(code);
+    }
+    setTimeout(() => bibRef.current?.focus(), 100);
+  };
+
+  const handleBibSubmit = async () => {
+    const bib = bibInput.trim();
+    if (!bib || !raceId) return;
+    setBibInput('');
+    try {
+      const res = await api.get('/registrations/lookup', { params: { raceId, search: bib } });
+      const regs: Registration[] = res.data;
+      if (regs.length === 0) { sounds.error(); triggerFlash('error'); toast.error(`Bib #${bib} not found.`); return; }
+      await performCheckIn(regs[0].id);
+    } catch {
+      sounds.error();
+      triggerFlash('error');
     }
   };
 
-  const checkIn = async () => {
-    if (!result) return;
-    setCheckInLoading(true);
-    try {
-      await api.patch(`/registrations/${result.id}/check-in`);
-      setCheckInDone(true);
-      setResult((prev) => prev ? { ...prev, status: 'CHECKED_IN' } : prev);
-      toast.success(`Bib #${result.bibNumber} checked in!`);
-    } catch {
-      toast.error('Check-in failed.');
-    } finally {
-      setCheckInLoading(false);
-    }
+  const flashConfig = {
+    success:   { bg: 'bg-blue-600',  icon: <CheckCircle className="h-16 w-16 text-white" />,   label: (n: string) => n },
+    duplicate: { bg: 'bg-amber-400', icon: <AlertTriangle className="h-16 w-16 text-white" />, label: (n: string) => `⚠ Already checked in — ${n}` },
+    error:     { bg: 'bg-red-500',   icon: <X className="h-16 w-16 text-white" />,              label: () => 'Not found' },
   };
+
+  const displayList = showAll ? checkedInRegs.map((r) => ({
+    id: r.id,
+    name: r.participant?.fullName ?? r.participant?.email ?? '—',
+    bib: r.bibNumber ?? '—',
+    at: new Date(r.updatedAt ?? r.createdAt ?? Date.now()),
+  })) : recentList;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Check-in</h1>
+    <div className="flex flex-col gap-4 h-full relative">
 
-      {/* Mode toggle */}
-      <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-        <button
-          onClick={() => { setMode('qr'); reset(); }}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            mode === 'qr' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <QrCode className="h-4 w-4" /> Scan QR Code
-        </button>
-        <button
-          onClick={() => { setMode('bib'); reset(); }}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            mode === 'bib' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          <Hash className="h-4 w-4" /> Bib Number
-        </button>
-      </div>
-
-      {/* QR scan mode */}
-      {mode === 'qr' && (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <p className="text-sm text-gray-500 text-center">
-              Point the camera at the participant's QR code on their bib or confirmation email.
-            </p>
-            <QrScanner onScan={handleQrScan} />
-            {loading && <p className="text-center text-sm text-gray-500">Looking up registration…</p>}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Bib number mode */}
-      {mode === 'bib' && (
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div>
-              <Label>Race</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={raceId}
-                onChange={(e) => { setRaceId(e.target.value); reset(); }}
-              >
-                <option value="">Select a race…</option>
-                {races.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} — {r.distance} km · {formatDateTime(r.startTime)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Bib Number</label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. 42"
-                  value={bibNumber}
-                  onChange={(e) => setBibNumber(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleBibLookup()}
-                />
-                <Button onClick={handleBibLookup} disabled={loading}>
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 text-red-700">
-          <XCircle className="h-5 w-5 shrink-0" />
-          <p className="text-sm">{error}</p>
+      {/* Flash overlay */}
+      {flash && (
+        <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 ${flashConfig[flash].bg}`}>
+          {flashConfig[flash].icon}
+          <p className="text-2xl font-bold text-white text-center px-8">
+            {flashConfig[flash].label(flashName)}
+          </p>
         </div>
       )}
 
-      {/* Result */}
-      {result && (
-        <Card>
-          <CardContent className="pt-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {result.participant?.fullName ?? 'Participant'}
-              </h2>
-              <Badge variant={result.status === 'CHECKED_IN' ? 'success' : 'info'}>
-                {result.status.replace('_', ' ')}
-              </Badge>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-xs text-gray-400">Bib Number</p>
-                <p className="font-mono font-semibold text-gray-900">{result.bibNumber}</p>
-              </div>
-              {result.participant?.email && (
-                <div>
-                  <p className="text-xs text-gray-400">Email</p>
-                  <p className="text-gray-700 truncate">{result.participant.email}</p>
-                </div>
-              )}
-            </div>
+      {/* Header */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <QrCode className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Check-in</h1>
+        </div>
+        <select
+          className="h-9 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={raceId}
+          onChange={(e) => { setRaceId(e.target.value); setRecentList([]); setBibInput(''); }}
+        >
+          <option value="">Select a race…</option>
+          {races.map((r) => (
+            <option key={r.id} value={r.id}>{r.name} — {r.distance} km</option>
+          ))}
+        </select>
+        {raceId && (
+          <span className="ml-auto rounded-full bg-blue-100 px-4 py-1.5 text-sm font-bold text-blue-700">
+            {checkedInRegs.length} / {allRegs.length} checked in
+          </span>
+        )}
+      </div>
 
-            {checkInDone ? (
-              <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-green-700">
-                <CheckCircle className="h-5 w-5" />
-                <p className="text-sm font-medium">Successfully checked in!</p>
-              </div>
-            ) : result.status === 'CHECKED_IN' ? (
-              <p className="text-sm text-gray-500 text-center py-2">Already checked in.</p>
-            ) : (
-              <Button className="w-full" onClick={checkIn} disabled={checkInLoading}>
-                {checkInLoading ? 'Checking in…' : `Check In Bib #${result.bibNumber}`}
-              </Button>
+      {!raceId ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 py-24 text-center">
+          <QrCode className="h-10 w-10 text-gray-300 mb-3" />
+          <p className="text-gray-500">Select a race to start</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 flex-1">
+
+          {/* Left: scan area */}
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => setScanning(true)}
+              className="w-full flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50 py-12 text-blue-600 hover:bg-blue-100 hover:border-blue-400 transition-colors"
+            >
+              <QrCode className="h-14 w-14" />
+              <span className="text-lg font-bold">Scan Participant QR Code</span>
+              <span className="text-sm text-blue-400">Tap to open camera</span>
+            </button>
+
+            {scanning && (
+              <QrScanner
+                onScan={handleQrScan}
+                onClose={() => { setScanning(false); setTimeout(() => bibRef.current?.focus(), 100); }}
+              />
             )}
 
-            <button
-              onClick={reset}
-              className="w-full text-center text-sm text-gray-400 hover:text-gray-600"
-            >
-              Scan another
-            </button>
-          </CardContent>
-        </Card>
+            {/* Bib fallback */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Hash className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                <Input
+                  ref={bibRef}
+                  inputMode="numeric"
+                  placeholder="Type bib number + Enter…"
+                  value={bibInput}
+                  onChange={(e) => setBibInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleBibSubmit(); }}
+                  className="pl-10 text-xl font-bold tracking-widest h-14"
+                  autoComplete="off"
+                />
+              </div>
+              <Button
+                onClick={handleBibSubmit}
+                disabled={!bibInput.trim()}
+                className="h-14 px-6 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold"
+              >
+                ✓
+              </Button>
+            </div>
+            <p className="text-xs text-gray-400 text-center -mt-2">Scan QR first · fallback: type bib # and press Enter</p>
+          </div>
+
+          {/* Right: checked-in list */}
+          <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-gray-400" />
+                <span className="text-sm font-semibold text-gray-700">
+                  {showAll ? `All checked-in (${checkedInRegs.length})` : `This session (${recentList.length})`}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowAll((s) => !s)}
+                className="text-xs font-medium text-blue-500 hover:text-blue-700"
+              >
+                {showAll ? 'Show session' : 'Show all'}
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+              {allRegsLoading && showAll ? (
+                <div className="p-6 text-center text-sm text-gray-400">Loading…</div>
+              ) : displayList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-300">
+                  <CheckCircle className="h-8 w-8 mb-2" />
+                  <p className="text-sm">No check-ins yet</p>
+                </div>
+              ) : (
+                displayList.map((p, i) => (
+                  <div
+                    key={`${p.id}-${i}`}
+                    className={`flex items-center gap-3 px-4 py-3 ${(p as any).duplicate ? 'bg-amber-50' : i === 0 && !showAll ? 'bg-blue-50' : ''}`}
+                  >
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white font-black ${(p as any).duplicate ? 'bg-amber-400' : 'bg-blue-500'}`}>
+                      {(p as any).duplicate ? '!' : <CheckCircle className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold truncate ${(p as any).duplicate ? 'text-amber-700' : 'text-gray-900'}`}>
+                        {p.name}
+                        {(p as any).duplicate && <span className="ml-1 text-xs font-normal">(already checked in)</span>}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        <span className="flex items-center gap-1 flex-wrap">
+                          {p.bib !== '—' && `Bib #${p.bib}`}
+                          {(p as any).country && <><span>·</span><CountryFlag country={(p as any).country} size={14} /></>}
+                          <span>· {p.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

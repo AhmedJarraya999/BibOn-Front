@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check, Utensils, Award } from 'lucide-react';
+import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check, Utensils, Award, AlertTriangle } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
@@ -17,6 +17,7 @@ const organizerLinks = [
   { href: '/registrations', label: 'Registrations', icon: ClipboardList },
   { href: '/volunteers', label: 'Volunteers', icon: UserCheck },
   { href: '/attendance', label: 'Attendance', icon: BarChart2 },
+  { href: '/reclamations', label: 'Reclamations', icon: AlertTriangle },
 ];
 
 const allVolunteerLinks = [

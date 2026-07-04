@@ -30,6 +30,7 @@ export interface Event {
   slug?: string;
   paymentMode: 'PREPAID_ONLY' | 'PREPAID_OR_ONSITE';
   logoUrl?: string;
+  pickupLocations?: string[];
   organizationId: string;
 }
 
@@ -49,6 +50,8 @@ export interface Participant {
   email: string;
   birthdate: string;
   gender: string;
+  phone?: string;
+  country?: string;
 }
 
 export interface Registration {
@@ -60,6 +63,9 @@ export interface Registration {
   participantId: string;
   startTime?: string;
   finishTime?: string;
+  lieuDeRetrait?: string;
+  createdAt?: string;
+  updatedAt?: string;
   participant?: Participant;
   race?: Race;
   distributions?: Distribution[];

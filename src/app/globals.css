@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@variant dark (&:is(.dark *));
+
+@keyframes scan {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(256px); }
+  100% { transform: translateY(0); }
+}
+.animate-scan {
+  animation: scan 2s ease-in-out infinite;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

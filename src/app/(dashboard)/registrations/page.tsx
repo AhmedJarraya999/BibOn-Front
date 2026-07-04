@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useRef, useMemo } from 'react';
 import { Plus, Package, Upload, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import api from '@/lib/api';
+import { CountryFlag } from '@/components/ui/country-flag';
 import { type Registration, type Race, type Event } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -223,7 +224,7 @@ export default function RegistrationsPage() {
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/60">
-                {['Bib', 'Participant', 'Race', 'Status', 'Items'].map((h) => (
+                {['Bib', 'Participant', 'Race', 'Pickup Location', 'Status', 'Items'].map((h) => (
                   <th
                     key={h}
                     className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
@@ -246,9 +247,17 @@ export default function RegistrationsPage() {
                     {r.participant?.email && (
                       <p className="text-xs text-gray-400 dark:text-gray-500">{r.participant.email}</p>
                     )}
+                    {r.participant?.country && (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        <CountryFlag country={r.participant.country} size={14} />
+                      </p>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
                     {r.race?.name ?? r.raceId}
+                  </td>
+                  <td className="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
+                    {r.lieuDeRetrait ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
                   </td>
                   <td className="whitespace-nowrap px-5 py-4">
                     <div className="flex items-center gap-2">

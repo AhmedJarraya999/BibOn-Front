@@ -51,6 +51,9 @@ function QRModal({ registration, onClose }: { registration: Registration; onClos
 
         <div className="mb-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Your Race Pass</p>
+          {(registration.race as any)?.event?.name && (
+            <p className="text-xs text-blue-600 font-medium mt-0.5">{(registration.race as any).event.name}</p>
+          )}
           <h2 className="mt-1 text-xl font-bold text-gray-900">{registration.race?.name}</h2>
           <p className="text-sm text-gray-500">{registration.participant?.fullName}</p>
         </div>
@@ -181,6 +184,11 @@ export default function MyRegistrationsPage() {
                   {/* Main content */}
                   <div className="flex flex-1 items-center justify-between gap-4 px-5 py-4">
                     <div>
+                      {(r.race as any)?.event?.name && (
+                        <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-0.5">
+                          {(r.race as any).event.name}
+                        </p>
+                      )}
                       <p className="font-semibold text-gray-900">{r.race?.name ?? 'Race'}</p>
                       <p className="mt-0.5 text-sm text-gray-500">
                         {r.race?.distance ? `${r.race.distance} km` : ''}
