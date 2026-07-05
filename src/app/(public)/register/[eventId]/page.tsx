@@ -24,6 +24,10 @@ const schema = z.object({
   country: z.string().optional(),
   raceId: z.string().min(1, 'Please select a race'),
   lieuDeRetrait: z.string().optional(),
+  bloodType: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  medicalConditions: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -231,6 +235,46 @@ export default function PublicRegisterPage() {
               </select>
             </div>
           )}
+
+          {/* Medical / Emergency section */}
+          <div className="border-t border-gray-100 pt-4 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              🚑 Emergency & Medical Info
+              <span className="text-sm font-normal text-gray-400">(optional but recommended)</span>
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Blood Type</Label>
+                <select className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" {...register('bloodType')}>
+                  <option value="">Unknown</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              <div>
+                <Label>Emergency Contact Name</Label>
+                <Input placeholder="Full name" {...register('emergencyContact')} />
+              </div>
+            </div>
+
+            <div>
+              <Label>Emergency Contact Phone</Label>
+              <Input type="tel" placeholder="+216 XX XXX XXX" {...register('emergencyPhone')} />
+            </div>
+
+            <div>
+              <Label>Medical Conditions / Allergies</Label>
+              <Input placeholder="e.g. Diabetic, asthma, penicillin allergy…" {...register('medicalConditions')} />
+              <p className="mt-1 text-xs text-gray-400">This information is only visible to medical volunteers in case of emergency.</p>
+            </div>
+          </div>
 
           {registerMutation.isError && (
             <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">

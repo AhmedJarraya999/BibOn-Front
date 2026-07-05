@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check, Utensils, Award, AlertTriangle } from 'lucide-react';
+import { Calendar, Users, Flag, ClipboardList, UserCheck, QrCode, LogOut, Building2, BarChart2, Menu, X, Timer, Package, Activity, ChevronDown, Check, Utensils, Award, AlertTriangle, HeartPulse, Gamepad2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { logout, getUser } from '@/lib/auth';
@@ -26,6 +26,8 @@ const allVolunteerLinks = [
   { href: '/ravito', label: 'Ravito Station', icon: Utensils, permission: 'RAVITO' },
   { href: '/medals', label: 'Medal Distribution', icon: Award, permission: 'MEDAL' },
   { href: '/finish', label: 'Finish Line', icon: Timer, permission: 'FINISH' },
+  { href: '/medical', label: 'Medical', icon: HeartPulse, permission: 'MEDICAL' },
+  { href: '/games', label: 'Games', icon: Gamepad2, permission: 'GAMES' },
 ];
 
 function OrgSwitcher() {

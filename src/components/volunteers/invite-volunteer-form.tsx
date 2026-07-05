@@ -15,8 +15,10 @@ const PERMISSIONS = [
   { value: 'BIB_DISTRIBUTION', label: 'Bib distribution', desc: 'Confirm arrival, collect payment, assign and hand out bib kits' },
   { value: 'RAVITO', label: 'Ravito station', desc: 'Hand out food and drinks at refreshment points' },
   { value: 'MEDAL', label: 'Medal distribution', desc: 'Hand out medals to finishers at the finish line' },
-  { value: 'CHECKPOINT', label: 'Checkpoint', desc: 'Scan runners at control points' },
   { value: 'FINISH_LINE', label: 'Finish line', desc: 'Record finish times' },
+  { value: 'MEDICAL', label: 'Medical / First Aid', desc: 'Look up health cards, record DNF and medical incidents' },
+  { value: 'GAMES', label: 'Games (Tambola / Quiz)', desc: 'Create and run tambola and quiz games for participants' },
+  { value: 'CHECKPOINT', label: 'Checkpoint', desc: 'Scan runners at control points' },
 ] as const;
 
 const schema = z.object({

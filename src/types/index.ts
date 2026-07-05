@@ -41,6 +41,7 @@ export interface Race {
   startTime: string;
   fee?: number | string;
   eventId: string;
+  gpxUrl?: string | null;
 }
 
 

@@ -15,6 +15,8 @@ const PERMISSIONS = [
   { value: 'RAVITO', label: 'Ravito station' },
   { value: 'MEDAL', label: 'Medal distribution' },
   { value: 'FINISH', label: 'Finish line' },
+  { value: 'MEDICAL', label: 'Medical / First Aid' },
+  { value: 'GAMES', label: 'Games (Tambola / Quiz)' },
   { value: 'DISQUALIFY', label: 'Disqualify' },
 ] as const;
 
