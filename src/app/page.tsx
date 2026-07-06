@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, MapPin, Calendar, ArrowRight } from 'lucide-react';
 import { getUser, isLoggedIn } from '@/lib/auth';
 import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002/api';
 
@@ -274,6 +275,7 @@ export default function Home() {
               </button>
             ))}
           </div>
+          <ThemeToggle />
           <Link href="/login" className="text-sm text-white/60 hover:text-white px-2 transition-colors">{c.login}</Link>
 
           {/* Find a Race */}

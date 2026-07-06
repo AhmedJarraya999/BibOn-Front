@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import Link from 'next/link';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
@@ -140,6 +141,7 @@ export default function EventDetailPage() {
       <div className="sticky top-0 z-50 bg-[#111111]/95 backdrop-blur border-b border-white/8 px-8 py-4 flex items-center justify-between">
         <Logo size="sm" variant="dark" />
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link href="/events" className="text-sm text-white/40 hover:text-white/70 transition-colors">← Mes événements</Link>
           <Link href={`/events/${id}/edit`} className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10 transition-colors">
             <Settings className="h-3.5 w-3.5" /> Paramètres

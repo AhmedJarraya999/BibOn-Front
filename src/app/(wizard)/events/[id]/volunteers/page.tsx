@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserPlus, Trash2, ChevronLeft, Shield, MapPin } from 'lucide-react';
 import api from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { Modal } from '@/components/ui/modal';
@@ -53,7 +54,10 @@ export default function VolunteersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['volunteers', id],
-    queryFn: () => api.get('/volunteers', { params: { eventId: id, limit: 100 } }).then(r => r.data),
+    queryFn: () => api.get('/volunteers', { params: { eventId: id, limit: 100, page: 1 } }).then(r => {
+      console.log('[volunteers] raw response:', r.data);
+      return r.data;
+    }),
   });
   const volunteers: Volunteer[] = data?.data ?? [];
 
@@ -73,9 +77,12 @@ export default function VolunteersPage() {
       {/* Top bar */}
       <div className="sticky top-0 z-50 bg-[#111111]/95 backdrop-blur border-b border-white/8 px-8 py-4 flex items-center justify-between">
         <Logo size="sm" variant="dark" />
-        <button onClick={() => router.push(`/events/${id}`)} className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors">
-          <ChevronLeft className="h-4 w-4" /> {eventData?.name ?? 'Événement'}
-        </button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button onClick={() => router.push(`/events/${id}`)} className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors">
+            <ChevronLeft className="h-4 w-4" /> {eventData?.name ?? 'Événement'}
+          </button>
+        </div>
       </div>
 
       <div className="mx-auto max-w-5xl px-8 py-10">
@@ -168,6 +175,7 @@ export default function VolunteersPage() {
       {inviteOpen && (
         <Modal open={inviteOpen} onClose={() => setInviteOpen(false)} title="Inviter un bénévole">
           <InviteVolunteerForm
+            eventId={id}
             onSuccess={() => { setInviteOpen(false); qc.invalidateQueries({ queryKey: ['volunteers'] }); toast.success('Bénévole invité !'); }}
           />
         </Modal>

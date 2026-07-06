@@ -31,30 +31,33 @@ const fieldCls = 'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 
 const labelCls = 'mb-1.5 block text-sm font-medium text-white/60';
 
 interface Props {
+  eventId?: string;
   onSuccess: () => void;
 }
 
-export function InviteVolunteerForm({ onSuccess }: Props) {
+export function InviteVolunteerForm({ eventId: defaultEventId, onSuccess }: Props) {
   const toast = useToast();
 
   const { data: eventsData } = useQuery({
     queryKey: ['events', 1, ''],
     queryFn: () => api.get('/events', { params: { limit: 100 } }).then((r) => r.data),
+    enabled: !defaultEventId,
   });
   const events = eventsData?.data ?? [];
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { permissions: ['CHECK_IN'] },
+    defaultValues: { permissions: ['CHECK_IN'], eventId: defaultEventId ?? '' },
   });
 
   const selectedPerms = watch('permissions');
   const selectedEventId = watch('eventId');
+  const activeEventId = defaultEventId ?? selectedEventId;
 
   const { data: racesData } = useQuery({
-    queryKey: ['races-for-event', selectedEventId],
-    queryFn: () => api.get('/races', { params: { eventId: selectedEventId, limit: 100 } }).then((r) => r.data),
-    enabled: !!selectedEventId,
+    queryKey: ['races-for-event', activeEventId],
+    queryFn: () => api.get('/races', { params: { eventId: activeEventId, limit: 100 } }).then((r) => r.data),
+    enabled: !!activeEventId,
   });
   const races = racesData?.data ?? [];
 
@@ -100,20 +103,22 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
         <input placeholder="Nom complet" className={fieldCls} {...register('name')} />
       </div>
 
-      {/* Event */}
-      <div>
-        <label className={labelCls}>Événement</label>
-        <select {...register('eventId')} className={fieldCls}>
-          <option value="">Sélectionner un événement…</option>
-          {events.map((e: { id: string; name: string }) => (
-            <option key={e.id} value={e.id}>{e.name}</option>
-          ))}
-        </select>
-        {errors.eventId && <p className="mt-1 text-xs text-red-400">{errors.eventId.message}</p>}
-      </div>
+      {/* Event — only show picker if not pre-filled from parent */}
+      {!defaultEventId && (
+        <div>
+          <label className={labelCls}>Événement</label>
+          <select {...register('eventId')} className={fieldCls}>
+            <option value="">Sélectionner un événement…</option>
+            {events.map((e: { id: string; name: string }) => (
+              <option key={e.id} value={e.id}>{e.name}</option>
+            ))}
+          </select>
+          {errors.eventId && <p className="mt-1 text-xs text-red-400">{errors.eventId.message}</p>}
+        </div>
+      )}
 
       {/* Race (conditional) */}
-      {selectedEventId && (
+      {activeEventId && (
         <div>
           <label className={labelCls}>Course <span className="text-white/25">(optionnel — laisser vide pour toutes les courses)</span></label>
           <select {...register('raceId')} className={fieldCls}>
