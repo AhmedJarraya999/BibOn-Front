@@ -6,36 +6,35 @@ import { useQuery } from '@tanstack/react-query';
 import { Mail, Send } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import api from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useOrg } from '@/lib/org-context';
 
 const PERMISSIONS = [
-  { value: 'CHECK_IN', label: 'Check-in', desc: 'Scan bibs at the start line' },
-  { value: 'BIB_DISTRIBUTION', label: 'Bib distribution', desc: 'Confirm arrival, collect payment, assign and hand out bib kits' },
-  { value: 'RAVITO', label: 'Ravito station', desc: 'Hand out food and drinks at refreshment points' },
-  { value: 'MEDAL', label: 'Medal distribution', desc: 'Hand out medals to finishers at the finish line' },
-  { value: 'FINISH_LINE', label: 'Finish line', desc: 'Record finish times' },
-  { value: 'MEDICAL', label: 'Medical / First Aid', desc: 'Look up health cards, record DNF and medical incidents' },
-  { value: 'GAMES', label: 'Games (Tambola / Quiz)', desc: 'Create and run tambola and quiz games for participants' },
-  { value: 'CHECKPOINT', label: 'Checkpoint', desc: 'Scan runners at control points' },
+  { value: 'CHECK_IN', label: 'Check-in', desc: 'Scanner les dossards au départ' },
+  { value: 'BIB_DISTRIBUTION', label: 'Distribution dossards', desc: 'Confirmer l\'arrivée, assigner et distribuer les dossards' },
+  { value: 'RAVITO', label: 'Ravitaillement', desc: 'Distribuer nourriture et boissons aux points de ravitaillement' },
+  { value: 'MEDAL', label: 'Médailles', desc: 'Remettre les médailles aux finishers à l\'arrivée' },
+  { value: 'FINISH_LINE', label: 'Ligne d\'arrivée', desc: 'Enregistrer les temps d\'arrivée' },
+  { value: 'MEDICAL', label: 'Médical / Premiers secours', desc: 'Consulter les fiches santé, enregistrer les DNF' },
+  { value: 'GAMES', label: 'Jeux (Tombola / Quiz)', desc: 'Animer les jeux pour les participants' },
+  { value: 'CHECKPOINT', label: 'Checkpoint', desc: 'Scanner les coureurs aux points de contrôle' },
 ] as const;
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
+  email: z.string().email('Email invalide'),
   name: z.string().optional(),
-  eventId: z.string().min(1, 'Select an event'),
+  eventId: z.string().min(1, 'Sélectionner un événement'),
   raceId: z.string().optional(),
-  permissions: z.array(z.string()).min(1, 'Select at least one role'),
+  permissions: z.array(z.string()).min(1, 'Sélectionner au moins un rôle'),
 });
 type FormData = z.infer<typeof schema>;
+
+const fieldCls = 'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none transition focus:border-[#FF8C00] focus:ring-2 focus:ring-[#FF8C00]/20 [&>option]:bg-[#1a1a1a]';
+const labelCls = 'mb-1.5 block text-sm font-medium text-white/60';
 
 interface Props {
   onSuccess: () => void;
 }
 
 export function InviteVolunteerForm({ onSuccess }: Props) {
-  const { activeOrg } = useOrg();
   const toast = useToast();
 
   const { data: eventsData } = useQuery({
@@ -72,56 +71,53 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
     try {
       const payload = { ...data, name: data.name || undefined, raceId: data.raceId || undefined };
       await api.post('/volunteers/invite', payload);
-      toast.success('Invitation sent successfully!');
+      toast.success('Invitation envoyée !');
       onSuccess();
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Failed to send invitation';
+      const msg = err?.response?.data?.message ?? err?.message ?? 'Erreur lors de l\'envoi';
       toast.error(Array.isArray(msg) ? msg.join(', ') : msg);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <div className="rounded-lg bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
-        <Mail className="h-4 w-4 mt-0.5 shrink-0" />
-        <span>The volunteer will receive an email with their login credentials. If they don't have an account yet, one will be created automatically.</span>
+      {/* Info banner */}
+      <div className="flex items-start gap-3 rounded-xl border border-[#FF8C00]/20 bg-[#FF8C00]/8 px-4 py-3">
+        <Mail className="h-4 w-4 text-[#FF8C00] mt-0.5 shrink-0" />
+        <p className="text-sm text-white/60">Le bénévole recevra un email avec ses identifiants. Si le compte n'existe pas encore, il sera créé automatiquement.</p>
       </div>
 
+      {/* Email */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-        <Input type="email" placeholder="volunteer@example.com" {...register('email')} />
-        {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+        <label className={labelCls}>Adresse email</label>
+        <input type="email" placeholder="bénévole@exemple.com" className={fieldCls} {...register('email')} />
+        {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>}
       </div>
 
+      {/* Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-gray-400">(optional — used if a new account is created)</span></label>
-        <Input placeholder="Full name" {...register('name')} />
+        <label className={labelCls}>Nom <span className="text-white/25">(optionnel — utilisé si un nouveau compte est créé)</span></label>
+        <input placeholder="Nom complet" className={fieldCls} {...register('name')} />
       </div>
 
+      {/* Event */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Event</label>
-        <select
-          {...register('eventId')}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-        >
-          <option value="">Select an event…</option>
+        <label className={labelCls}>Événement</label>
+        <select {...register('eventId')} className={fieldCls}>
+          <option value="">Sélectionner un événement…</option>
           {events.map((e: { id: string; name: string }) => (
             <option key={e.id} value={e.id}>{e.name}</option>
           ))}
         </select>
-        {errors.eventId && <p className="text-xs text-red-500 mt-1">{errors.eventId.message}</p>}
+        {errors.eventId && <p className="mt-1 text-xs text-red-400">{errors.eventId.message}</p>}
       </div>
 
+      {/* Race (conditional) */}
       {selectedEventId && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Race <span className="text-gray-400">(optional — leave blank for all races in the event)</span>
-          </label>
-          <select
-            {...register('raceId')}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="">All races</option>
+          <label className={labelCls}>Course <span className="text-white/25">(optionnel — laisser vide pour toutes les courses)</span></label>
+          <select {...register('raceId')} className={fieldCls}>
+            <option value="">Toutes les courses</option>
             {races.map((r: { id: string; name: string; distance: number }) => (
               <option key={r.id} value={r.id}>{r.name} ({r.distance} km)</option>
             ))}
@@ -129,9 +125,10 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
         </div>
       )}
 
+      {/* Permissions */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Station / Role</label>
-        <div className="space-y-2">
+        <label className={labelCls}>Station / Rôle</label>
+        <div className="space-y-2 mt-1">
           {PERMISSIONS.map((p) => {
             const active = selectedPerms?.includes(p.value);
             return (
@@ -139,33 +136,42 @@ export function InviteVolunteerForm({ onSuccess }: Props) {
                 key={p.value}
                 type="button"
                 onClick={() => togglePerm(p.value)}
-                className={`w-full flex items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+                className={`w-full flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                   active
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-[#FF8C00]/40 bg-[#FF8C00]/8'
+                    : 'border-white/8 bg-white/3 hover:border-white/15 hover:bg-white/5'
                 }`}
               >
-                <div className={`mt-0.5 h-4 w-4 rounded border-2 shrink-0 flex items-center justify-center ${
-                  active ? 'border-red-500 bg-red-500' : 'border-gray-300'
+                <div className={`mt-0.5 h-4 w-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${
+                  active ? 'border-[#FF8C00] bg-[#FF8C00]' : 'border-white/20'
                 }`}>
-                  {active && <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10"><path d="M1.5 5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                  {active && (
+                    <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10">
+                      <path d="M1.5 5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </div>
                 <div>
-                  <p className={`text-sm font-medium ${active ? 'text-red-700' : 'text-gray-800'}`}>{p.label}</p>
-                  <p className="text-xs text-gray-400">{p.desc}</p>
+                  <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-white/60'}`}>{p.label}</p>
+                  <p className="text-xs text-white/30 mt-0.5">{p.desc}</p>
                 </div>
               </button>
             );
           })}
         </div>
-        {errors.permissions && <p className="text-xs text-red-500 mt-1">{errors.permissions.message}</p>}
+        {errors.permissions && <p className="mt-1 text-xs text-red-400">{errors.permissions.message}</p>}
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" disabled={isSubmitting} className="gap-2">
+      {/* Submit */}
+      <div className="flex justify-end pt-2">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex items-center gap-2 rounded-xl bg-[#FF8C00] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e67e00] disabled:opacity-60 transition-all hover:scale-[1.02] shadow-lg shadow-[#FF8C00]/20"
+        >
           <Send className="h-4 w-4" />
-          {isSubmitting ? 'Sending…' : 'Send Invitation'}
-        </Button>
+          {isSubmitting ? 'Envoi…' : 'Envoyer l\'invitation'}
+        </button>
       </div>
     </form>
   );

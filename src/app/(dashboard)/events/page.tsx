@@ -1,6 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Search, Pencil, Trash2, ImageIcon, Share2 } from 'lucide-react';
 import api from '@/lib/api';
 import { type Event } from '@/types';
@@ -16,6 +17,7 @@ import { CardGridSkeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/utils';
 
 export default function EventsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
@@ -52,7 +54,7 @@ export default function EventsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Events</h1>
           {activeOrg && <p className="mt-0.5 text-sm text-gray-500">{activeOrg.name}</p>}
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button onClick={() => router.push('/events/new')}>
           <Plus className="mr-2 h-4 w-4" /> New Event
         </Button>
       </div>
