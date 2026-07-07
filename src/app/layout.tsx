@@ -6,7 +6,7 @@ import { Providers } from '@/components/layout/providers';
 const geist = Geist({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'BibOn',
+  title: 'كورسة',
   description: 'Sports Event & Race Management',
 };
 

@@ -5,20 +5,20 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { type Race } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast';
 
 const schema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  distance: z.coerce.number().positive('Distance must be positive') as z.ZodNumber,
-  startTime: z.string().min(1, 'Start time is required'),
-  fee: z.coerce.number().min(0, 'Fee must be 0 or more') as z.ZodNumber,
-  eventId: z.string().min(1, 'Event is required'),
+  name: z.string().min(2, 'Le nom doit comporter au moins 2 caractères'),
+  distance: z.coerce.number().positive('La distance doit être positive') as z.ZodNumber,
+  startTime: z.string().min(1, "L'heure de départ est requise"),
+  fee: z.coerce.number().min(0, 'Le frais doit être ≥ 0') as z.ZodNumber,
+  eventId: z.string().min(1, 'Sélectionner un événement'),
 });
 
 type FormData = z.infer<typeof schema>;
+
+const F = 'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/25 outline-none transition focus:border-[#FF8C00] focus:ring-2 focus:ring-[#FF8C00]/20 [color-scheme:dark]';
+const L = 'mb-1.5 block text-sm font-medium text-white/60';
 
 interface Props {
   race?: Race;
@@ -33,15 +33,16 @@ export function RaceForm({ race, defaultEventId, onSuccess }: Props) {
   const { data: eventsData } = useQuery({
     queryKey: ['events', 1, ''],
     queryFn: () => api.get('/events', { params: { limit: 100 } }).then((r) => r.data),
+    enabled: !defaultEventId,
   });
   const events = eventsData?.data ?? [];
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: race ? {
       name: race.name,
       distance: race.distance,
-      startTime: race.startTime.slice(0, 16),
+      startTime: race.startTime?.slice(0, 16),
       fee: Number(race.fee ?? 0),
       eventId: race.eventId,
     } : {
@@ -52,67 +53,65 @@ export function RaceForm({ race, defaultEventId, onSuccess }: Props) {
 
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
-      race
-        ? api.patch(`/races/${race.id}`, data)
-        : api.post('/races', data),
+      race ? api.patch(`/races/${race.id}`, data) : api.post('/races', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['races'] });
-      toast.success(race ? 'Race updated.' : 'Race created.');
+      toast.success(race ? 'Course mise à jour.' : 'Course créée !');
       onSuccess();
     },
-    onError: () => toast.error('Something went wrong.'),
+    onError: () => toast.error('Une erreur est survenue.'),
   });
 
-  const onSubmit = (data: FormData) => mutation.mutate(data);
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
       <div>
-        <Label>Race Name</Label>
-        <Input placeholder="10K Run" {...register('name')} />
-        {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+        <label className={L}>Nom de la course</label>
+        <input placeholder="10K Run" className={F} {...register('name')} />
+        {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
       </div>
 
       <div>
-        <Label>Distance (km)</Label>
-        <Input type="number" step="0.1" placeholder="10" {...register('distance')} />
-        {errors.distance && <p className="mt-1 text-xs text-red-500">{errors.distance.message}</p>}
+        <label className={L}>Distance (km)</label>
+        <input type="number" step="0.1" placeholder="10" className={F} {...register('distance')} />
+        {errors.distance && <p className="mt-1 text-xs text-red-400">{errors.distance.message}</p>}
       </div>
 
       <div>
-        <Label>Participation Fee (TND)</Label>
-        <Input type="number" step="0.001" min="0" placeholder="0.000" {...register('fee')} />
-        {errors.fee && <p className="mt-1 text-xs text-red-500">{errors.fee.message}</p>}
+        <label className={L}>Frais de participation (TND)</label>
+        <input type="number" step="0.001" min="0" placeholder="0.000" className={F} {...register('fee')} />
+        {errors.fee && <p className="mt-1 text-xs text-red-400">{errors.fee.message}</p>}
       </div>
 
       <div>
-        <Label>Start Time</Label>
-        <Input type="datetime-local" {...register('startTime')} />
-        {errors.startTime && <p className="mt-1 text-xs text-red-500">{errors.startTime.message}</p>}
+        <label className={L}>Heure de départ</label>
+        <input type="datetime-local" className={F} {...register('startTime')} />
+        {errors.startTime && <p className="mt-1 text-xs text-red-400">{errors.startTime.message}</p>}
       </div>
 
-      <div>
-        <Label>Event</Label>
-        <select
-          className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          {...register('eventId')}
-        >
-          <option value="">Select event…</option>
-          {events.map((e: { id: string; name: string }) => (
-            <option key={e.id} value={e.id}>{e.name}</option>
-          ))}
-        </select>
-        {errors.eventId && <p className="mt-1 text-xs text-red-500">{errors.eventId.message}</p>}
-      </div>
-
-      {mutation.isError && (
-        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">Something went wrong. Please try again.</p>
+      {!defaultEventId && (
+        <div>
+          <label className={L}>Événement</label>
+          <select className={`${F} [&>option]:bg-[#1a1a1a]`} {...register('eventId')}>
+            <option value="">Sélectionner un événement…</option>
+            {events.map((e: { id: string; name: string }) => (
+              <option key={e.id} value={e.id}>{e.name}</option>
+            ))}
+          </select>
+          {errors.eventId && <p className="mt-1 text-xs text-red-400">{errors.eventId.message}</p>}
+        </div>
       )}
 
-      <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Saving…' : race ? 'Save Changes' : 'Create Race'}
-        </Button>
+      {mutation.isError && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          Une erreur est survenue. Veuillez réessayer.
+        </div>
+      )}
+
+      <div className="flex justify-end pt-2">
+        <button type="submit" disabled={mutation.isPending || isSubmitting}
+          className="flex items-center gap-2 rounded-xl bg-[#FF8C00] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#e67e00] disabled:opacity-60 transition-all hover:scale-[1.02] shadow-lg shadow-[#FF8C00]/20">
+          {mutation.isPending ? 'Enregistrement…' : race ? 'Enregistrer' : 'Créer la course'}
+        </button>
       </div>
     </form>
   );

@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   Users, Flag, MapPin, Calendar, Copy, Check, ExternalLink,
-  Settings, ChevronRight, Trophy, ClipboardList, Zap, AlertTriangle
+  Settings, ChevronRight, Trophy, ClipboardList, Zap, AlertTriangle, Hash
 } from 'lucide-react';
 import api from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
@@ -286,6 +286,12 @@ export default function EventDetailPage() {
                   label="Gérer les courses"
                   desc="Modifier distances et catégories"
                   href={`/events/${id}/races`}
+                />
+                <QuickAction
+                  icon={<Hash className="h-4 w-4" />}
+                  label="Points de distribution"
+                  desc="Gérer les points et bénévoles de distribution"
+                  href={`/events/${id}/distribution-points`}
                 />
                 <QuickAction
                   icon={<Trophy className="h-4 w-4" />}
