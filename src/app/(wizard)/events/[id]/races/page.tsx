@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, ChevronLeft, Zap, Clock, Users, MapPin, Radio } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronLeft, Zap, Clock, Users, MapPin, Radio, Link2, Check } from 'lucide-react';
 import api from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -21,6 +21,14 @@ export default function RacesPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Race | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyCheckinLink = (raceId: string) => {
+    const url = `${window.location.origin}/checkin?raceId=${raceId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(raceId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const { data: eventData } = useQuery({
     queryKey: ['event', id],
@@ -147,6 +155,15 @@ export default function RacesPage() {
                     <p className="text-xs text-white/30">par inscrit</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button onClick={() => copyCheckinLink(race.id)}
+                      className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs transition-colors ${
+                        copiedId === race.id
+                          ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                          : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10 hover:text-white'
+                      }`}>
+                      {copiedId === race.id ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                      {copiedId === race.id ? 'Copié !' : 'Check-in'}
+                    </button>
                     <button onClick={() => router.push(`/events/${id}/races/${race.id}/checkpoints`)}
                       className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50 hover:bg-white/10 hover:text-white transition-colors">
                       <MapPin className="h-3.5 w-3.5" /> Checkpoints

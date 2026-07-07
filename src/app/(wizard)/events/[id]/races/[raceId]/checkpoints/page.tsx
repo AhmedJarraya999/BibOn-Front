@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, ChevronLeft, ArrowUp, ArrowDown, Pencil, Trash2, Flag, Droplets, Utensils, Timer } from 'lucide-react';
+import { Plus, ChevronLeft, ArrowUp, ArrowDown, Pencil, Trash2, Flag, Link2, Check } from 'lucide-react';
 import api from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -25,6 +25,7 @@ interface Checkpoint {
   type: string;
   cutoffTime?: string | null;
   raceId: string;
+  token?: string | null;
   _count?: { scans: number };
 }
 
@@ -37,6 +38,14 @@ export default function CheckpointsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Checkpoint | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyLink = (cp: Checkpoint) => {
+    if (!cp.token) return;
+    navigator.clipboard.writeText(`${window.location.origin}/cp/${cp.token}`);
+    setCopiedId(cp.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const { data: raceData } = useQuery({
     queryKey: ['race', raceId],
@@ -173,6 +182,15 @@ export default function CheckpointsPage() {
 
                         {/* Actions */}
                         <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => copyLink(cp)}
+                            className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                              copiedId === cp.id
+                                ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                                : 'border-white/10 bg-white/5 text-white/40 hover:text-white'
+                            }`}>
+                            {copiedId === cp.id ? <Check className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+                            {copiedId === cp.id ? 'Copié' : 'Lien'}
+                          </button>
                           <button onClick={() => move(cp, 'up')} disabled={isFirst}
                             className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-white/40 hover:text-white disabled:opacity-20 transition-colors">
                             <ArrowUp className="h-3.5 w-3.5" />

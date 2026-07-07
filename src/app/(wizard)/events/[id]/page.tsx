@@ -4,9 +4,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   Users, Flag, MapPin, Calendar, Copy, Check, ExternalLink,
-  Settings, ChevronRight, Trophy, ClipboardList, Zap, AlertTriangle, Hash
+  Settings, ChevronRight, Trophy, ClipboardList, Zap, AlertTriangle, Hash, Radio, LogOut
 } from 'lucide-react';
 import api from '@/lib/api';
+import { logout } from '@/lib/auth';
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import Link from 'next/link';
@@ -105,7 +106,6 @@ export default function EventDetailPage() {
   const registrations = registrationsData?.data ?? registrationsData ?? [];
 
   const registrationLink = `${APP_URL}/e/${event?.slug ?? id}`;
-  const checkinLink = `${APP_URL}/checkin`;
 
   if (isLoading) {
     return (
@@ -143,9 +143,12 @@ export default function EventDetailPage() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <Link href="/events" className="text-sm text-white/40 hover:text-white/70 transition-colors">← Mes événements</Link>
-          <Link href={`/events/${id}/edit`} className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10 transition-colors">
+          <Link href="/account" className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10 transition-colors">
             <Settings className="h-3.5 w-3.5" /> Paramètres
           </Link>
+          <button onClick={logout} className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-colors">
+            <LogOut className="h-3.5 w-3.5" /> Déconnexion
+          </button>
         </div>
       </div>
 
@@ -259,7 +262,16 @@ export default function EventDetailPage() {
               <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Liens</h2>
               <div className="rounded-2xl border border-white/8 bg-white/3 p-5 space-y-4">
                 <CopyBox label="Lien d'inscription" value={registrationLink} />
-                <CopyBox label="Lien check-in bénévoles" value={checkinLink} />
+                {races.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-white/30 uppercase tracking-wider mb-2">Lien check-in bénévoles</p>
+                    <div className="space-y-2">
+                      {races.map((race: any) => (
+                        <CopyBox key={race.id} label={race.name} value={`${APP_URL}/checkin?raceId=${race.id}`} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -292,6 +304,12 @@ export default function EventDetailPage() {
                   label="Points de distribution"
                   desc="Gérer les points et bénévoles de distribution"
                   href={`/events/${id}/distribution-points`}
+                />
+                <QuickAction
+                  icon={<Radio className="h-4 w-4" />}
+                  label="Race Day Live"
+                  desc="Vue temps réel · checkpoints · abandons"
+                  href={`/events/${id}/raceday`}
                 />
                 <QuickAction
                   icon={<Trophy className="h-4 w-4" />}

@@ -346,11 +346,11 @@ export default function DistributePage() {
         <div style={{ padding:'20px 24px 48px' }}>
 
           {/* ── Stats ── */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:18 }}>
+          <div style={{ display:'flex', gap:8, marginBottom:18 }}>
             {stats.map(s=>(
-              <div key={s.label} style={{ borderRadius:12,background:s.bg,border:`1.5px solid ${s.border}`,padding:'14px 16px',display:'flex',alignItems:'center',gap:12 }}>
-                <p style={{ fontSize:28,fontWeight:900,color:s.color,lineHeight:1 }}>{s.value}</p>
-                <p style={{ fontSize:10,fontWeight:700,color:C.sub,textTransform:'uppercase',letterSpacing:'0.04em',lineHeight:1.4 }}>{s.label}</p>
+              <div key={s.label} style={{ borderRadius:10, background:C.card, border:`1.5px solid ${C.border}`, padding:'10px 16px', display:'flex', alignItems:'center', gap:10, boxShadow:'0 1px 3px rgba(0,0,0,0.04)' }}>
+                <span style={{ fontSize:22, fontWeight:900, color:s.color, lineHeight:1 }}>{s.value}</span>
+                <span style={{ fontSize:11, fontWeight:700, color:C.sub, whiteSpace:'nowrap' }}>{s.label}</span>
               </div>
             ))}
           </div>

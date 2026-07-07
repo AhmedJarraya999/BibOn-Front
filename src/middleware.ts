@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/e', '/distribute'];
+const PUBLIC_PATHS = ['/', '/login', '/register', '/e', '/distribute', '/cp'];
 
 const ROLE_PATHS: Record<string, string[]> = {
   PARTICIPANT: ['/portal'],
   VOLUNTEER: ['/checkin', '/finish', '/distribution', '/ravito', '/medals', '/medical', '/games'],
-  ORGANIZER: ['/dashboard', '/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/reclamations'],
+  ORGANIZER: ['/dashboard', '/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/reclamations', '/checkin', '/finish', '/distribution', '/ravito', '/medals', '/medical', '/games'],
   ADMIN: ['/dashboard', '/events', '/races', '/participants', '/registrations', '/volunteers', '/organizations', '/attendance', '/reclamations', '/checkin', '/finish', '/distribution', '/ravito', '/medals', '/medical', '/games', '/portal'],
 };
 
